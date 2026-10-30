@@ -8,6 +8,11 @@ import { cam, project, screen } from '../state/camera'
 import { catalogState, figureCentroidKm, starKm, starMagFrom, starName, useCatalog } from '../state/catalog'
 import { positions } from '../state/clock'
 import { tapHandler } from '../state/flight'
+import { dist, len, type V3 } from '../lib/space/vec'
+import { apparentMag } from '../lib/space/photometry'
+import { resolveStar } from '../lib/space/starId'
+import { universe } from '../state/universe'
+import { KM_PER_PC } from '../lib/space/units'
 import { labelLayer } from '../state/labels'
 import { parseSelectionKey, selectionKey, sky, useSky } from '../state/store'
 
@@ -94,6 +99,22 @@ export function SkyOverlay() {
           if (!p.behind) cands.push({ id: `fig:${f.abbr}`, x: p.x, y: p.y, weight: 3 })
         }
       }
+      // Generated stars that look bright enough to tap.
+      for (const ch of universe.loaded.values()) {
+        for (let i = 0; i < ch.count; i++) {
+          const sp: V3 = [ch.origin[0] + ch.pos[i * 3] * KM_PER_PC, ch.origin[1] + ch.pos[i * 3 + 1] * KM_PER_PC, ch.origin[2] + ch.pos[i * 3 + 2] * KM_PER_PC]
+          const p = project(sp)
+          if (p.behind || Math.abs(p.x - x) > 40 || Math.abs(p.y - y) > 40) continue
+          const m = apparentMag(ch.absMag[i], dist(sp, cam.pos) / KM_PER_PC)
+          if (m < 6.5) cands.push({ id: `star:g${ch.key}/${i}`, x: p.x, y: p.y, weight: starWeight(m) })
+        }
+      }
+      // Galaxies we are outside of.
+      for (const g of universe.near) {
+        if (universe.active.includes(g)) continue
+        const p = project(g.center)
+        if (!p.behind) cands.push({ id: `gal:${g.key}`, x: p.x, y: p.y, weight: 4 })
+      }
       const hit = pickAt(cands, x, y, touch ? 30 : 18)
       sky.select(hit ? parseSelectionKey(hit) : null)
     }
@@ -129,11 +150,13 @@ export function SkyOverlay() {
       if (!settings.labels && !sel) continue
       add({ id: key, text: BODIES[id].name, px: p.x, py: p.y, off: Math.max(rpx, 4) + 6, priority: sel ? 100 : bodyPriority(id), ring: rpx < 3 || sel, cls: 'label--body' }, p.z * 0.9999)
     }
+    // Constellation names only mean something near home.
+    const nearHome = len(cam.pos) / KM_PER_PC < 30
     if (settings.figures) {
       for (const f of centroids) {
         const p = project(f.pos)
         const key = `fig:${f.abbr}`
-        if (p.behind || (!settings.labels && key !== selKey)) continue
+        if (p.behind || ((!settings.labels || !nearHome) && key !== selKey)) continue
         add({ id: key, text: f.name.toUpperCase(), px: p.x, py: p.y, off: 0, priority: key === selKey ? 100 : 50, ring: false, cls: 'label--figure' })
       }
     }
@@ -146,6 +169,18 @@ export function SkyOverlay() {
         if (p.behind) continue
         add({ id: `star:h${catalog.hyg[i]}`, text: starName(i), px: p.x, py: p.y, off: 7, priority: 40 - m, ring: false, cls: 'label--star' })
       }
+    }
+    for (const g of universe.near) {
+      if (universe.active.includes(g) || (g.key !== 'mw' && len(cam.pos) / KM_PER_PC < 20000)) continue
+      const p = project(g.center)
+      if (p.behind) continue
+      const key = `gal:${g.key}`
+      add({ id: key, text: g.name.replace(' (generated)', ''), px: p.x, py: p.y, off: 10, priority: key === selKey ? 100 : 45, ring: key === selKey, cls: 'label--galaxy' })
+    }
+    if (selected?.kind === 'star' && selected.id.startsWith('g')) {
+      const r = resolveStar(selected.id, null)
+      const p = r && project(r.posKm)
+      if (p && !p.behind) add({ id: selKey!, text: 'Uncharted star', px: p.x, py: p.y, off: 11, priority: 100, ring: true, cls: 'label--star' })
     }
     if (catalog && selected?.kind === 'star' && selected.id.startsWith('h')) {
       const i = catalog.byHyg.get(Number(selected.id.slice(1)))

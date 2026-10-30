@@ -30,6 +30,22 @@ const smoothstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t)
 }
 
+/** How much a point (pc from the centre, in the disc plane) sits on a spiral arm, 0..1. */
+function armAt(g: Pick<Galaxy, 'normal' | 'e1' | 'arms' | 'twist' | 'radiusPc'>, ip: V3, r: number): number {
+  const e2 = cross(g.normal, g.e1)
+  const theta = Math.atan2(dot(ip, e2), dot(ip, g.e1))
+  const phase = g.arms * (theta - g.twist * Math.log(1 + r / (0.08 * g.radiusPc)))
+  return Math.pow(0.5 + 0.5 * Math.cos(phase), 4)
+}
+
+/** Spiral-arm strength at a point (km), 0..1; 1 for galaxies without arms. */
+export function armStrength(g: Galaxy, posKm: V3): number {
+  if (g.kind !== 'spiral') return 1
+  const rel = scale(sub(posKm, g.center), 1 / KM_PER_PC)
+  const ip = sub(rel, scale(g.normal, dot(rel, g.normal)))
+  return armAt(g, ip, len(ip))
+}
+
 /** Unnormalised star density at a point (km). */
 function raw(g: Pick<Galaxy, 'center' | 'radiusPc' | 'kind' | 'normal' | 'e1' | 'arms' | 'twist' | 'seed'>, posKm: V3, armAverage = false): number {
   const rel = scale(sub(posKm, g.center), 1 / KM_PER_PC)
@@ -39,13 +55,7 @@ function raw(g: Pick<Galaxy, 'center' | 'radiusPc' | 'kind' | 'normal' | 'e1' | 
   const r = len(ip)
   if (g.kind === 'spiral') {
     const disc = Math.exp(-r / (0.17 * R) - Math.abs(h) / (0.02 * R)) * smoothstep(1.2 * R, 0.85 * R, r)
-    let arm = 1.06
-    if (!armAverage) {
-      const e2 = cross(g.normal, g.e1)
-      const theta = Math.atan2(dot(ip, e2), dot(ip, g.e1))
-      const phase = g.arms * (theta - g.twist * Math.log(1 + r / (0.08 * R)))
-      arm = 0.35 + 2.6 * Math.pow(0.5 + 0.5 * Math.cos(phase), 4)
-    }
+    const arm = armAverage ? 1.06 : 0.35 + 2.6 * armAt(g, ip, r)
     const d = len(rel)
     return disc * arm + 6 * Math.exp(-Math.pow(d / (0.06 * R), 2))
   }

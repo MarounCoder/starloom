@@ -171,3 +171,16 @@ describe('rayDir', () => {
     expect((angle * 180) / Math.PI).toBeCloseTo(25, 6)
   })
 })
+
+describe('travel with an approach direction', () => {
+  it('arrives on the requested side of the target', () => {
+    const from: V3 = [1e15, 0, 0]
+    const to: V3 = [0, 0, 0]
+    const end = travelPath(from, to, 5e14, 1, [0, 0, 1])
+    expect(end[0]).toBeCloseTo(0)
+    expect(end[2] / 5e14).toBeCloseTo(1)
+  })
+  it('still starts where you are', () => {
+    expect(travelPath([1e15, 0, 0], [0, 0, 0], 5e14, 0, [0, 0, 1])).toEqual([1e15, 0, 0])
+  })
+})

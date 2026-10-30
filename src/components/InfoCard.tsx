@@ -1,7 +1,11 @@
 import { Navigation, Volume2, X } from 'lucide-react'
 import { BODIES } from '../lib/space/bodies'
 import { IAU } from '../lib/space/iau'
-import { spectralFromBv } from '../lib/space/photometry'
+import { apparentMag, spectralFromBv } from '../lib/space/photometry'
+import { resolveStar } from '../lib/space/starId'
+import { galaxyByKey } from '../lib/space/cosmos'
+import { KM_PER_PC } from '../lib/space/units'
+import { galaxyDestination, go } from '../state/places'
 import { audio } from '../lib/music/audio'
 import { fmtDistance, fmtMag } from '../lib/format'
 import { dist } from '../lib/space/vec'
@@ -63,6 +67,51 @@ function BodyCard({ id }: { id: Extract<Selection, { kind: 'body' }>['id'] }) {
   )
 }
 
+function GeneratedStarCard({ id }: { id: string }) {
+  const camSnap = useCamSnapshot()
+  const r = resolveStar(id, null)
+  if (!r) return null
+  return (
+    <Card
+      eyebrow={`Star in ${r.galaxy.replace(' (generated)', '')}`}
+      title="Uncharted star"
+      sub="Generated: Starloom made this star up. It is not in any catalogue."
+      actions={
+        <button type="button" className="pill" onClick={() => flyTo({ kind: 'star', id })}>
+          <Navigation size={14} aria-hidden /> Fly here
+        </button>
+      }
+    >
+      <Fact label="Distance here" value={fmtDistance(dist(camSnap.pos, r.posKm))} />
+      <Fact label="Magnitude here" value={fmtMag(apparentMag(r.absMag, dist(camSnap.pos, r.posKm) / KM_PER_PC))} />
+      <Fact label="Class" value={`≈${spectralFromBv(r.ci)} (from colour)`} />
+    </Card>
+  )
+}
+
+const KIND_NAME = { spiral: 'Spiral galaxy', elliptical: 'Elliptical galaxy', irregular: 'Irregular galaxy' }
+
+function GalaxyCard({ id }: { id: string }) {
+  const camSnap = useCamSnapshot()
+  const g = galaxyByKey(id)
+  if (!g) return null
+  return (
+    <Card
+      eyebrow={g.real ? 'Our galaxy' : `${KIND_NAME[g.kind]} · generated`}
+      title={g.name.replace(' (generated)', '')}
+      sub={g.real ? 'Home: about 100 billion stars, the Sun among them.' : 'Generated: an imagined galaxy you can fly into, star by star.'}
+      actions={
+        <button type="button" className="pill" onClick={() => go(galaxyDestination(g))}>
+          <Navigation size={14} aria-hidden /> Fly here
+        </button>
+      }
+    >
+      <Fact label="Diameter" value={fmtDistance(g.radiusPc * 2 * KM_PER_PC)} />
+      <Fact label="Distance here" value={fmtDistance(Math.max(0, dist(camSnap.pos, g.center) - g.radiusPc * KM_PER_PC))} />
+    </Card>
+  )
+}
+
 function StarCard({ id }: { id: string }) {
   const camSnap = useCamSnapshot()
   const { catalog, names } = useCatalog()
@@ -110,7 +159,7 @@ export function InfoCard() {
   const s = useSky(st => st.selected)
   if (!s) return null
   if (s.kind === 'body') return <BodyCard id={s.id} />
-  if (s.kind === 'star') return <StarCard id={s.id} />
+  if (s.kind === 'star') return s.id.startsWith('g') ? <GeneratedStarCard id={s.id} /> : <StarCard id={s.id} />
   if (s.kind === 'figure') return <FigureCard abbr={s.abbr} />
-  return null
+  return <GalaxyCard id={s.id} />
 }

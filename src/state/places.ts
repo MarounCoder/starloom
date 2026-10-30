@@ -2,7 +2,9 @@ import { BODIES, BODY_IDS, type BodyId } from '../lib/space/bodies'
 import { IAU } from '../lib/space/iau'
 import { buildIndex, type Entry, type Index } from '../lib/space/search'
 import { KM_PER_AU, KM_PER_PC } from '../lib/space/units'
-import { sub, type V3 } from '../lib/space/vec'
+import { dist, sub, type V3 } from '../lib/space/vec'
+import { MILKY_WAY, type Galaxy } from '../lib/space/galaxy'
+import { galaxiesNear, galaxyByKey } from '../lib/space/cosmos'
 import { cam } from './camera'
 import { catalogState, figureCentroidKm, starKm, starMagFrom } from './catalog'
 import { positions } from './clock'
@@ -10,7 +12,12 @@ import { flyTo, lookToward, type Target } from './flight'
 import { sky } from './store'
 
 /** Where a search result or a suggested place takes you. */
-export type Destination = Target | { kind: 'figure'; abbr: string }
+export type Destination = Target | { kind: 'figure'; abbr: string } | { kind: 'galaxy'; key: string }
+
+/** Face-on, from far enough out to see the whole galaxy. */
+export function galaxyDestination(g: Galaxy): Destination {
+  return { kind: 'galaxy', key: g.key }
+}
 
 /** Go somewhere: fly to bodies, stars and points; turn to face constellations. Selects what has a card. */
 export function go(d: Destination) {
@@ -18,6 +25,14 @@ export function go(d: Destination) {
     const c = figureCentroidKm(d.abbr)
     if (c) lookToward(sub(c, cam.pos))
     sky.select({ kind: 'figure', abbr: d.abbr })
+    return
+  }
+  if (d.kind === 'galaxy') {
+    const g = galaxyByKey(d.key)
+    if (!g) return
+    const out = g.key === 'mw' ? 32000 : g.radiusPc * 2.6
+    flyTo({ kind: 'point', pos: g.center, arriveKm: out * KM_PER_PC, approach: g.normal })
+    sky.select({ kind: 'galaxy', id: g.key })
     return
   }
   flyTo(d)
@@ -66,6 +81,17 @@ export const PLACES: Place[] = [
         for (let k = 0; k < 3; k++) pos[k] += p[k] / ids.length
       }
       return { kind: 'point', pos, arriveKm: 6 * KM_PER_PC }
+    },
+  },
+  { label: 'Above the Milky Way', blurb: 'Our whole galaxy, from 100,000 light-years up', dest: () => galaxyDestination(MILKY_WAY) },
+  {
+    label: 'The nearest other galaxy',
+    blurb: 'Generated: a galaxy that Starloom imagined',
+    dest: () => {
+      const g = galaxiesNear([0, 0, 0])
+        .filter(x => x.key !== 'mw')
+        .sort((a, b) => dist(a.center, MILKY_WAY.center) - dist(b.center, MILKY_WAY.center))[0]
+      return g ? galaxyDestination(g) : null
     },
   },
 ]

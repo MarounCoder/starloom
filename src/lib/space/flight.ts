@@ -16,6 +16,7 @@ export interface Orbit {
 
 export interface Travel {
   from: V3
+  approach?: V3
   arrive: number
   elapsed: number
   duration: number
@@ -168,24 +169,27 @@ export function stepOrbit(f: Flight, cam: Pose, target: V3, radius: number, inpu
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
 /** A point on a fly-to: the distance to the destination shrinks geometrically, so huge trips feel smooth. */
-export function travelPath(from: V3, to: V3, arriveDist: number, t: number): V3 {
+export function travelPath(from: V3, to: V3, arriveDist: number, t: number, approach?: V3): V3 {
   const d0 = dist(from, to)
   if (d0 === 0) return from
   if (t <= 0) return from
   const e = easeInOutCubic(Math.min(1, t))
   const d = Math.exp((1 - e) * Math.log(d0) + e * Math.log(Math.max(arriveDist, 1e-9)))
-  return add(to, scale(sub(from, to), d / d0))
+  const start = scale(sub(from, to), 1 / d0)
+  // With an approach direction, the side we come from swings round to it as we close in.
+  const dir = approach ? norm(add(scale(start, 1 - e), scale(norm(approach), e))) : start
+  return add(to, scale(dir, d))
 }
 
 export function travelDuration(d0: number, arriveDist: number): number {
   return Math.max(1.2, Math.min(4, 1.2 + 0.25 * Math.log10(Math.max(1, d0 / arriveDist))))
 }
 
-export function startTravel(f: Flight, cam: Pose, target: V3, arrive: number): void {
+export function startTravel(f: Flight, cam: Pose, target: V3, arrive: number, approach?: V3): void {
   f.vel = [0, 0, 0]
   f.yawVel = f.pitchVel = 0
   f.orbit = null
-  f.travel = { from: cam.pos, arrive, elapsed: 0, duration: travelDuration(dist(cam.pos, target), arrive), startYaw: cam.yaw, startPitch: cam.pitch }
+  f.travel = { from: cam.pos, approach, arrive, elapsed: 0, duration: travelDuration(dist(cam.pos, target), arrive), startYaw: cam.yaw, startPitch: cam.pitch }
 }
 
 /** Advance a fly-to; the view turns toward the target during the first third. Returns true on arrival. */
@@ -194,7 +198,7 @@ export function stepTravel(f: Flight, cam: Pose, target: V3, dt: number): boolea
   if (!tr) return true
   tr.elapsed += dt
   const t = Math.min(1, tr.elapsed / tr.duration)
-  cam.pos = travelPath(tr.from, target, tr.arrive, t)
+  cam.pos = travelPath(tr.from, target, tr.arrive, t, tr.approach)
   const want = anglesFor(sub(target, cam.pos))
   const k = Math.min(1, t / 0.35)
   const s = k * k * (3 - 2 * k)

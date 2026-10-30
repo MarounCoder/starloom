@@ -10,7 +10,7 @@ import {
   stepTravel,
   type FlightInput,
 } from '../lib/space/flight'
-import type { StarId } from '../lib/space/starId'
+import { resolveStar, type StarId } from '../lib/space/starId'
 import { KM_PER_PC } from '../lib/space/units'
 import { dist, scale, sub, type V3 } from '../lib/space/vec'
 import { cam } from './camera'
@@ -20,7 +20,7 @@ import { positions } from './clock'
 export type Target =
   | { kind: 'body'; id: BodyId }
   | { kind: 'star'; id: StarId }
-  | { kind: 'point'; pos: V3; arriveKm: number; look?: V3 }
+  | { kind: 'point'; pos: V3; arriveKm: number; approach?: V3 }
 
 export const flight = newFlight()
 
@@ -44,19 +44,13 @@ let travelTarget: { pos: () => V3; arrive: number; body: BodyId | null } | null 
 
 export const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
-/** Real-star ids resolve through the catalogue; generated ids are added with the generated universe. */
+/** Where a star is (km), real or generated. */
 export function starPosKm(id: StarId): V3 | null {
-  const c = catalogState().catalog
-  if (!c || !id.startsWith('h')) return null
-  const i = c.byHyg.get(Number(id.slice(1)))
-  if (i === undefined) return null
-  return [c.pos[i * 3] * KM_PER_PC, c.pos[i * 3 + 1] * KM_PER_PC, c.pos[i * 3 + 2] * KM_PER_PC]
+  return resolveStar(id, catalogState().catalog)?.posKm ?? null
 }
 
 function starArriveKm(id: StarId): number {
-  const c = catalogState().catalog
-  const i = c?.byHyg.get(Number(id.slice(1)))
-  const abs = c && i !== undefined ? c.absMag[i] : 4.83
+  const abs = resolveStar(id, catalogState().catalog)?.absMag ?? 4.83
   const lum = Math.pow(10, -0.4 * (abs - 4.83))
   return 0.02 * KM_PER_PC * Math.max(1, Math.sqrt(lum)) * 0.05
 }
@@ -119,7 +113,7 @@ export function flyTo(t: Target) {
     travelTarget = { pos: () => t.pos, arrive: t.arriveKm, body: null }
   }
   const target = travelTarget.pos()
-  startTravel(flight, cam, target, travelTarget.arrive)
+  startTravel(flight, cam, target, travelTarget.arrive, t.kind === 'point' ? t.approach : undefined)
   if (reducedMotion()) {
     flight.travel!.elapsed = flight.travel!.duration
   }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search as SearchIcon } from 'lucide-react'
-import { query } from '../lib/space/search'
+import { buildIndex, query } from '../lib/space/search'
+import { universe } from '../state/universe'
 import { useCatalog } from '../state/catalog'
 import { PLACES, go, searchIndex } from '../state/places'
 
@@ -12,7 +13,10 @@ export function Search() {
   const input = useRef<HTMLInputElement>(null)
   // Re-render once the catalogue arrives so star names become searchable.
   useCatalog()
-  const results = q.trim() ? query(searchIndex(), q, 8) : []
+  const galaxies = buildIndex(
+    universe.near.map(g => ({ key: `gal:${g.key}`, label: g.name.replace(' (generated)', ''), detail: g.real ? 'Our galaxy' : 'Galaxy · generated', aliases: g.real ? ['Milky Way', 'Galaxy'] : [], target: { kind: 'galaxy' as const, key: g.key }, rank: 40 })),
+  )
+  const results = q.trim() ? [...query(searchIndex(), q, 8), ...query(galaxies, q, 3)].slice(0, 9) : []
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -26,8 +26,8 @@ export function setStarsPerChunk(n: number) {
 
 export const sidePc = (k: number) => BASE_SIDE_PC * 2 ** k
 
-/** Faintest absolute magnitude for level k: such a star looks magnitude 7 at the load radius. */
-const faintAt = (k: number) => 12 - 5 * Math.log10(LOAD_RADIUS * sidePc(k))
+/** Faintest absolute magnitude for level k: such a star looks magnitude 6.5 at the load radius. */
+const faintAt = (k: number) => 11.5 - 5 * Math.log10(LOAD_RADIUS * sidePc(k))
 
 /** [brightest, faintest] absolute magnitude stored at level k. */
 export function magBand(k: number): [number, number] {

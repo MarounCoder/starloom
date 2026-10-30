@@ -10,15 +10,30 @@ import { RealStars } from './RealStars'
 import { Figures } from './Figures'
 import { FlightInput } from './FlightInput'
 import { SkyOverlay } from './SkyOverlay'
+import { GenStars } from './GenStars'
+import { Galaxies } from './Galaxies'
+import { Nebulae } from './Nebulae'
+import { NearStar } from './NearStar'
+import { DistantGalaxies } from './DistantGalaxies'
+import { nearestGalaxyKm, nearestGenStarsKm, universe } from '../state/universe'
+import { dist } from '../lib/space/vec'
+import { MILKY_WAY } from '../lib/space/galaxy'
+import { galaxiesNear } from '../lib/space/cosmos'
 import { useSky } from '../state/store'
-import { flight, flyTo, stepFlight } from '../state/flight'
+import { extraNearest, flight, flyTo, stepFlight } from '../state/flight'
+
+// Generated stars and galaxies also set the flight speed.
+extraNearest.push(
+  () => nearestGenStarsKm().reduce((m, p) => Math.min(m, dist(p, cam.pos)), Infinity),
+  nearestGalaxyKm,
+)
 
 Object.assign(cam, homePose(clock.now(), typeof innerWidth === 'number' ? innerWidth / innerHeight : 1.6))
 
 /** `?debug` exposes the camera and clock to the screenshot scripts. */
 const debug = typeof location !== 'undefined' && location.search.includes('debug')
 const hook = {
-  frames: 0, cam, clock, positions, anglesFor, flyTo, flight,
+  frames: 0, cam, clock, positions, anglesFor, flyTo, flight, universe, MILKY_WAY, galaxiesNear,
   /** Screen point of a catalogue star by Hipparcos number, for the screenshot scripts. */
   screenOfStar(hip: number) {
     const i = catalogState().catalog?.byHip.get(hip)
@@ -65,8 +80,13 @@ export function Universe({ onContextLost }: { onContextLost?: () => void }) {
       <FlightInput />
       <SkyOverlay />
       <MilkyWayBackdrop />
+      <DistantGalaxies />
       <Figures visible={figuresOn} />
+      <GenStars />
+      <Galaxies />
+      <Nebulae />
       <RealStars />
+      <NearStar />
       <SolarSystem />
       <EffectComposer>
         <Bloom mipmapBlur luminanceThreshold={0.9} intensity={1.2} />
