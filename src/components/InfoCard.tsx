@@ -1,4 +1,6 @@
-import { Navigation, Volume2, X } from 'lucide-react'
+import { Copy, Navigation, Play, Square, Volume2, X } from 'lucide-react'
+import { figureToConstellation } from '../lib/constellations'
+import { toggle } from '../state/player'
 import { BODIES } from '../lib/space/bodies'
 import { IAU } from '../lib/space/iau'
 import { apparentMag, spectralFromBv } from '../lib/space/photometry'
@@ -143,12 +145,32 @@ function StarCard({ id }: { id: string }) {
 }
 
 function FigureCard({ abbr }: { abbr: string }) {
-  const { figures } = useCatalog()
+  const { figures, catalog } = useCatalog()
+  const playing = useSky(s => s.playing.includes(`fig:${abbr}`))
   const c = IAU.find(x => x.abbr === abbr)
   const f = figures.find(x => x.abbr === abbr)
-  if (!c || !f) return null
+  if (!c || !f || !catalog) return null
+  const copy = () => {
+    const earth = positions().earth
+    sky.add(figureToConstellation(f.segs, i => `h${catalog.hyg[i]}`, i => starMagFrom(i, earth), c.name, 0))
+    sky.toast(`${c.name} is now yours to edit`)
+  }
   return (
-    <Card eyebrow="Constellation" title={c.name} sub={`${c.genitive} · ${abbr}`} actions={null}>
+    <Card
+      eyebrow="Constellation"
+      title={c.name}
+      sub={`${c.genitive} · ${abbr}`}
+      actions={
+        <>
+          <button type="button" className="pill pill--primary" onClick={() => toggle(`fig:${abbr}`)}>
+            {playing ? <Square size={14} aria-hidden /> : <Play size={14} aria-hidden />} {playing ? 'Stop' : 'Play'}
+          </button>
+          <button type="button" className="pill" onClick={copy}>
+            <Copy size={14} aria-hidden /> Make a copy
+          </button>
+        </>
+      }
+    >
       <Fact label="Stars in the figure" value={String(new Set(f.segs.flat()).size)} />
       <Fact label="Lines" value={String(f.segs.length)} />
     </Card>

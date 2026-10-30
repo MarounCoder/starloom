@@ -12,6 +12,7 @@ import { dist, len, type V3 } from '../lib/space/vec'
 import { apparentMag } from '../lib/space/photometry'
 import { resolveStar } from '../lib/space/starId'
 import { universe } from '../state/universe'
+import { soundStar } from '../state/player'
 import { KM_PER_PC } from '../lib/space/units'
 import { labelLayer } from '../state/labels'
 import { parseSelectionKey, selectionKey, sky, useSky } from '../state/store'
@@ -115,7 +116,19 @@ export function SkyOverlay() {
         const p = project(g.center)
         if (!p.behind) cands.push({ id: `gal:${g.key}`, x: p.x, y: p.y, weight: 4 })
       }
-      const hit = pickAt(cands, x, y, touch ? 30 : 18)
+      const radius = touch ? 30 : 18
+      if (useSky.getState().mode === 'draw') {
+        // Drawing: only stars count, and a tap joins the star and sounds it.
+        const star = pickAt(cands.filter(c => c.id.startsWith('star:')), x, y, radius)
+        if (!star) {
+          sky.toast('Tap a star to join it')
+          return
+        }
+        const id = star.slice(5)
+        if (sky.tapStar(id)) soundStar(id)
+        return
+      }
+      const hit = pickAt(cands, x, y, radius)
       sky.select(hit ? parseSelectionKey(hit) : null)
     }
     return () => {

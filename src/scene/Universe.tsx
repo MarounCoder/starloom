@@ -15,6 +15,7 @@ import { Galaxies } from './Galaxies'
 import { Nebulae } from './Nebulae'
 import { NearStar } from './NearStar'
 import { DistantGalaxies } from './DistantGalaxies'
+import { UserFigures } from './UserFigures'
 import { nearestGalaxyKm, nearestGenStarsKm, universe } from '../state/universe'
 import { dist } from '../lib/space/vec'
 import { MILKY_WAY } from '../lib/space/galaxy'
@@ -87,6 +88,7 @@ export function Universe({ onContextLost }: { onContextLost?: () => void }) {
       <Nebulae />
       <RealStars />
       <NearStar />
+      <UserFigures />
       <SolarSystem />
       <EffectComposer>
         <Bloom mipmapBlur luminanceThreshold={0.9} intensity={1.2} />

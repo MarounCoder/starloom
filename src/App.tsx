@@ -6,12 +6,16 @@ import { webglSupport } from './lib/webgl'
 import { InfoCard } from './components/InfoCard'
 import { Search } from './components/Search'
 import { TimeBar } from './components/TimeBar'
+import { Toolbar } from './components/Toolbar'
+import { Toasts } from './components/Toasts'
+import { useKeyboard } from './hooks'
 import { labelLayer } from './state/labels'
 
 const supported = webglSupport() === 'ok'
 
 export function App() {
   const [lost, setLost] = useState(false)
+  useKeyboard()
   if (!supported || lost) return <NoWebGL lost={lost} />
   return (
     <>
@@ -28,9 +32,11 @@ export function App() {
             <Brand />
             <Search />
           </div>
-        </header>
-        <footer className="hud__bottom hud__bottom--left">
           <TimeBar />
+        </header>
+        <Toasts />
+        <footer className="hud__bottom">
+          <Toolbar />
         </footer>
       </div>
       <InfoCard />

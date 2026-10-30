@@ -392,3 +392,17 @@ button { font: inherit; color: inherit; }
 .search__box input:focus-visible { outline: none; }
 .search__box input::-webkit-search-cancel-button { filter: invert(0.8); }
 .label--galaxy .label__text { color: #c8d2ff; opacity: 0.75; font-size: 0.6rem; letter-spacing: 0.1em; }
+
+/* ---------- top bar on phones ---------- */
+@media (max-width: 720px) {
+  .hud__top { flex-direction: column; }
+  .timebar { position: absolute; top: var(--top); right: var(--gutter-r); }
+  .timebar__readout { min-width: 0; }
+  .timebar__date { font-size: 0.6rem; }
+  .timebar__now { padding: 0 8px; }
+  .search { width: calc(100vw - 32px); }
+}
+@media (max-width: 440px) {
+  .timebar__btn { min-width: 26px; }
+  .timebar__readout { display: none; }
+}
