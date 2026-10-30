@@ -307,3 +307,12 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- no WebGL ---------- */
+.nowebgl {
+  position: fixed; inset: 0; display: grid; place-content: center; gap: 10px; padding: 24px;
+  text-align: center; background: radial-gradient(ellipse at 50% 40%, #121a3a, var(--ink-deep) 70%);
+}
+.nowebgl .wordmark { font-size: clamp(2.6rem, 9vw, 4rem); }
+.nowebgl p:not(.eyebrow) { margin: 6px 0 0; color: var(--haze); max-width: 36ch; }
+.nowebgl .pill { justify-self: center; margin-top: 8px; padding: 8px 18px; border-radius: 999px; background: var(--brass); color: var(--ink-deep); border: 0; cursor: pointer; }
