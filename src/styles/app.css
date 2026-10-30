@@ -316,3 +316,27 @@ button { font: inherit; color: inherit; }
 .nowebgl .wordmark { font-size: clamp(2.6rem, 9vw, 4rem); }
 .nowebgl p:not(.eyebrow) { margin: 6px 0 0; color: var(--haze); max-width: 36ch; }
 .nowebgl .pill { justify-self: center; margin-top: 8px; padding: 8px 18px; border-radius: 999px; background: var(--brass); color: var(--ink-deep); border: 0; cursor: pointer; }
+
+/* ---------- 3D labels ---------- */
+.labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+.label { position: absolute; left: 0; top: 0; will-change: transform; }
+.label__text {
+  position: absolute; left: var(--off, 6px); top: 0; transform: translateY(-50%); white-space: nowrap;
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--starlight);
+  opacity: 0.82; text-shadow: 0 1px 4px var(--ink-deep), 0 0 2px var(--ink-deep);
+}
+.label__ring { display: none; position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--brass); }
+.label--ring .label__ring { display: block; }
+.label--body .label__text { color: var(--starlight); opacity: 0.95; }
+.label--figure .label__text { transform: translate(-50%, -50%); left: 0; color: var(--brass); opacity: 0.62; font-size: 0.6rem; letter-spacing: 0.22em; }
+.label--star .label__text { opacity: 0.7; font-size: 0.62rem; }
+.label--sel .label__text { color: var(--brass); opacity: 1; }
+.label--sel .label__ring { border-width: 1.5px; box-shadow: 0 0 10px var(--brass-soft); }
+
+/* ---------- info card ---------- */
+.card .close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; }
+.card__title { margin: 4px 40px 0 0; font-family: var(--display); font-weight: 400; font-size: 2rem; line-height: 1.05; }
+.card__sub { margin: 6px 0 12px; font-style: italic; line-height: 1.45; color: var(--haze); }
+.card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.card__actions:empty { display: none; }
+.pill--ghost { border-color: var(--hairline); }

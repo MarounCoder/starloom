@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { parseCatalog, type StarCatalog } from '../lib/space/catalog'
+import { apparentMag } from '../lib/space/photometry'
+import { KM_PER_PC } from '../lib/space/units'
 
 export interface Figure {
   abbr: string
@@ -63,4 +65,23 @@ export function useCatalog(): CatalogState {
     },
     () => state,
   )
+}
+
+/** A catalogue star's position in km. */
+export function starKm(i: number): [number, number, number] {
+  const p = state.catalog!.pos
+  return [p[i * 3] * KM_PER_PC, p[i * 3 + 1] * KM_PER_PC, p[i * 3 + 2] * KM_PER_PC]
+}
+
+/** A catalogue star's apparent magnitude seen from a point (km). */
+export function starMagFrom(i: number, fromKm: [number, number, number]): number {
+  const s = starKm(i)
+  const d = Math.hypot(s[0] - fromKm[0], s[1] - fromKm[1], s[2] - fromKm[2]) / KM_PER_PC
+  return apparentMag(state.catalog!.absMag[i], d)
+}
+
+/** A star's best name: proper, Bayer, Flamsteed, then its catalogue number. */
+export function starName(i: number): string {
+  const n = state.names[String(state.catalog!.hyg[i])]
+  return n?.[0] ?? n?.[1] ?? n?.[2] ?? `HYG ${state.catalog!.hyg[i]}`
 }

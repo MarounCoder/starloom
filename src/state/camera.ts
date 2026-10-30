@@ -62,3 +62,20 @@ export function subscribeCam(fn: () => void) {
 }
 
 export const useCamSnapshot = () => useSyncExternalStore(subscribeCam, () => snapshot)
+
+/** The canvas size in CSS pixels, kept current by the frame loop. */
+export const screen = { w: 1, h: 1 }
+
+/** Where a world point lands on screen (CSS px), its depth along the view, and how many px one km spans there. */
+export function project(pos: V3): { x: number; y: number; z: number; behind: boolean; pxPerKm: number } {
+  const { fwd, right, up } = camBasis()
+  const rel: V3 = [pos[0] - cam.pos[0], pos[1] - cam.pos[1], pos[2] - cam.pos[2]]
+  const z = rel[0] * fwd[0] + rel[1] * fwd[1] + rel[2] * fwd[2]
+  const t = Math.tan((cam.fovDeg * Math.PI) / 360)
+  const aspect = screen.w / screen.h
+  const behind = z <= 0
+  const zz = behind ? 1e-9 : z
+  const nx = (rel[0] * right[0] + rel[1] * right[1] + rel[2] * right[2]) / (zz * t * aspect)
+  const ny = (rel[0] * up[0] + rel[1] * up[1] + rel[2] * up[2]) / (zz * t)
+  return { x: ((nx + 1) / 2) * screen.w, y: ((1 - ny) / 2) * screen.h, z, behind, pxPerKm: screen.h / 2 / (zz * t) }
+}
