@@ -85,3 +85,18 @@ export function starName(i: number): string {
   const n = state.names[String(state.catalog!.hyg[i])]
   return n?.[0] ?? n?.[1] ?? n?.[2] ?? `HYG ${state.catalog!.hyg[i]}`
 }
+
+/** The centre (km) of a constellation figure's stars, where its name is drawn. */
+export function figureCentroidKm(abbr: string): [number, number, number] | null {
+  const f = state.figures.find(x => x.abbr === abbr)
+  if (!f || !state.catalog) return null
+  const ids = [...new Set(f.segs.flat())]
+  const c: [number, number, number] = [0, 0, 0]
+  for (const i of ids) {
+    const p = starKm(i)
+    c[0] += p[0] / ids.length
+    c[1] += p[1] / ids.length
+    c[2] += p[2] / ids.length
+  }
+  return c
+}

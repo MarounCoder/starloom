@@ -78,9 +78,37 @@ export function cancelTravel() {
   flight.travel = null
 }
 
+let turn: { fy: number; fp: number; ty: number; tp: number; t: number } | null = null
+const TURN_S = 0.9
+
+/** Turn to face a direction without moving. */
+export function lookToward(dir: V3) {
+  exitOrbit()
+  cancelTravel()
+  flight.yawVel = flight.pitchVel = 0
+  const a = anglesFor(dir)
+  if (reducedMotion()) {
+    cam.yaw = a.yaw
+    cam.pitch = a.pitch
+    return
+  }
+  turn = { fy: cam.yaw, fp: cam.pitch, ty: a.yaw, tp: a.pitch, t: 0 }
+}
+
+function stepTurn(dt: number) {
+  if (!turn) return
+  turn.t = Math.min(1, turn.t + dt / TURN_S)
+  const k = turn.t * turn.t * (3 - 2 * turn.t)
+  const dy = Math.atan2(Math.sin(turn.ty - turn.fy), Math.cos(turn.ty - turn.fy))
+  cam.yaw = turn.fy + dy * k
+  cam.pitch = turn.fp + (turn.tp - turn.fp) * k
+  if (turn.t >= 1) turn = null
+}
+
 /** Glide to something; any input takes over again. Bodies are circled on arrival. */
 export function flyTo(t: Target) {
   exitOrbit()
+  turn = null
   if (t.kind === 'body') {
     travelTarget = { pos: () => positions()[t.id], arrive: BODIES[t.id].radiusKm * 4, body: t.id }
   } else if (t.kind === 'star') {
@@ -162,6 +190,8 @@ export function stepFlight(dt: number) {
   const input = consume()
   const reduced = reducedMotion()
   if (flight.travel && input.any) cancelTravel()
+  if (turn && input.any) turn = null
+  stepTurn(dt)
 
   if (flight.travel && travelTarget) {
     const done = stepTravel(flight, cam, travelTarget.pos(), dt)

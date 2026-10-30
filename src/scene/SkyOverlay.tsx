@@ -4,9 +4,8 @@ import { BODIES, BODY_IDS, type BodyId } from '../lib/space/bodies'
 import { IAU, iauIndex } from '../lib/space/iau'
 import { placeLabels, type LabelReq } from '../lib/space/labels'
 import { pickAt, starWeight, type Candidate } from '../lib/space/pick'
-import type { V3 } from '../lib/space/vec'
 import { cam, project, screen } from '../state/camera'
-import { catalogState, starKm, starMagFrom, starName, useCatalog } from '../state/catalog'
+import { catalogState, figureCentroidKm, starKm, starMagFrom, starName, useCatalog } from '../state/catalog'
 import { positions } from '../state/clock'
 import { tapHandler } from '../state/flight'
 import { labelLayer } from '../state/labels'
@@ -35,17 +34,7 @@ export function SkyOverlay() {
   /** Figure label anchors: the centroid of each figure's stars (km). */
   const centroids = useMemo(() => {
     if (!catalog) return []
-    return figures.map(f => {
-      const ids = [...new Set(f.segs.flat())]
-      const c: V3 = [0, 0, 0]
-      for (const i of ids) {
-        const p = starKm(i)
-        c[0] += p[0] / ids.length
-        c[1] += p[1] / ids.length
-        c[2] += p[2] / ids.length
-      }
-      return { abbr: f.abbr, pos: c, name: IAU[iauIndex.get(f.abbr)!].name }
-    })
+    return figures.map(f => ({ abbr: f.abbr, pos: figureCentroidKm(f.abbr)!, name: IAU[iauIndex.get(f.abbr)!].name }))
   }, [catalog, figures])
 
   const namedStars = useMemo(() => {
