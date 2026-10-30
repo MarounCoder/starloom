@@ -1,5 +1,5 @@
 export const KM_PER_AU = 149_597_870.7
-export const KM_PER_PC = 3.0856775814913673e13
+export const KM_PER_PC = 3.085677581491367e13
 export const KM_PER_LY = 9.4607304725808e12
 /** Mean obliquity of the ecliptic at J2000. */
 export const OBLIQUITY_RAD = (23.4392911 * Math.PI) / 180
