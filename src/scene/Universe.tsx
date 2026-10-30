@@ -7,18 +7,22 @@ import { SolarSystem } from './SolarSystem'
 import { MilkyWayBackdrop } from './MilkyWayBackdrop'
 import { RealStars } from './RealStars'
 import { Figures } from './Figures'
+import { FlightInput } from './FlightInput'
+import { flight, flyTo, stepFlight } from '../state/flight'
 
 Object.assign(cam, homePose(clock.now(), typeof innerWidth === 'number' ? innerWidth / innerHeight : 1.6))
 
 /** `?debug` exposes the camera and clock to the screenshot scripts. */
 const debug = typeof location !== 'undefined' && location.search.includes('debug')
-const hook = { frames: 0, cam, clock, positions, anglesFor }
+const hook = { frames: 0, cam, clock, positions, anglesFor, flyTo, flight }
 if (debug) (window as unknown as { __starloom: typeof hook }).__starloom = hook
 
 /** Runs first every frame: advance time and point the camera. The camera itself never leaves the origin. */
 function CameraRig() {
   useFrame(({ camera }, dt) => {
-    tick(Math.min(dt, 0.1))
+    const step = Math.min(dt, 0.1)
+    tick(step)
+    stepFlight(step)
     const f = camForward()
     camera.position.set(0, 0, 0)
     camera.up.set(ECL_NORTH[0], ECL_NORTH[1], ECL_NORTH[2])
@@ -45,6 +49,7 @@ export function Universe({ onContextLost }: { onContextLost?: () => void }) {
     >
       <color attach="background" args={['#05060d']} />
       <CameraRig />
+      <FlightInput />
       <MilkyWayBackdrop />
       <Figures />
       <RealStars />

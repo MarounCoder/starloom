@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
-import { ECL_NORTH, eclToEq, eqToEcl, raDecToVec } from '../lib/space/frames'
+import { ECL_NORTH, raDecToVec } from '../lib/space/frames'
+import { anglesFor, dirFor } from '../lib/space/flight'
 import { BODIES } from '../lib/space/bodies'
 import { bodyPositions } from '../lib/space/ephemeris'
 import { add, cross, norm, scale, type V3 } from '../lib/space/vec'
@@ -14,20 +15,9 @@ export interface Cam {
   fovDeg: number
 }
 
-export const PITCH_LIMIT = (89 * Math.PI) / 180
-
 export const cam: Cam = { pos: [0, 0, 0], yaw: 0, pitch: 0, fovDeg: 50 }
 
-/** Unit view direction for a yaw and pitch. */
-export function dirFor(yaw: number, pitch: number): V3 {
-  return eclToEq([Math.cos(pitch) * Math.cos(yaw), Math.cos(pitch) * Math.sin(yaw), Math.sin(pitch)])
-}
-
-/** Yaw and pitch that look along a direction. */
-export function anglesFor(dir: V3): { yaw: number; pitch: number } {
-  const e = eqToEcl(norm(dir))
-  return { yaw: Math.atan2(e[1], e[0]), pitch: Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, Math.asin(Math.max(-1, Math.min(1, e[2]))))) }
-}
+export { anglesFor, dirFor }
 
 export const camForward = (): V3 => dirFor(cam.yaw, cam.pitch)
 
