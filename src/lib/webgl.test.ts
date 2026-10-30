@@ -10,6 +10,9 @@ describe('webglSupport', () => {
   it('says ok when WebGL 2 is available', () => {
     expect(webglSupport(canvas(k => (k === 'webgl2' ? {} : null)))).toBe('ok')
   })
+  it('says none when only WebGL 1 is available (three.js needs WebGL 2)', () => {
+    expect(webglSupport(canvas(k => (k === 'webgl' ? {} : null)))).toBe('none')
+  })
   it('says none when asking for a context throws', () => {
     expect(
       webglSupport(

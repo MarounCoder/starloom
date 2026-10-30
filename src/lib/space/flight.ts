@@ -106,7 +106,9 @@ export function clampOutside(pos: V3, bodies: { pos: V3; radius: number }[], mar
   return p
 }
 
-function stepLook(f: Flight, look: [number, number], dt: number, reduced: boolean): [number, number] {
+function stepLook(f: Flight, look: [number, number], frameDt: number, reduced: boolean): [number, number] {
+  // Coarse timers can report a frame of zero length; never divide by it.
+  const dt = Math.max(frameDt, 1e-3)
   if (look[0] || look[1]) {
     if (reduced) {
       f.yawVel = f.pitchVel = 0

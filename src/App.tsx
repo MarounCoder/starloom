@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Universe } from './scene/Universe'
 import { Brand } from './components/Brand'
 import { NoWebGL } from './components/NoWebGL'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { webglSupport } from './lib/webgl'
 import { InfoCard } from './components/InfoCard'
 import { Search } from './components/Search'
@@ -29,7 +30,9 @@ export function App() {
           labelLayer.root = el
         }}
       />
-      <Universe onContextLost={() => setLost(true)} />
+      <ErrorBoundary fallback={<NoWebGL />}>
+        <Universe onContextLost={() => setLost(true)} />
+      </ErrorBoundary>
       <div className="hud">
         <header className="hud__top">
           <div className="hud__left">

@@ -62,14 +62,13 @@ export function useKeyboard() {
   }, [])
 }
 
-function resolveNow() {
+function resolveNow(alreadyDropped = 0) {
   const { catalog } = catalogState()
   const s = useSky.getState()
   const { constellations, dropped } = resolveSky(s.constellations, catalog)
-  if (dropped) {
-    sky.setConstellations(constellations)
-    sky.toast(dropped === 1 ? 'One star could not be found and was left out' : `${dropped} stars could not be found and were left out`)
-  }
+  if (dropped) sky.setConstellations(constellations)
+  const n = dropped + alreadyDropped
+  if (n) sky.toast(n === 1 ? 'One star could not be found and was left out' : `${n} stars could not be found and were left out`)
 }
 
 /** Once the real catalogue is in, check every saved or shared star still exists. */
@@ -99,7 +98,7 @@ export function useSharedLink() {
         Object.assign(cam, shared.camera)
       }
       sky.select(shared.target)
-      resolveNow()
+      resolveNow(shared.dropped)
     }
     open()
     window.addEventListener('hashchange', open)

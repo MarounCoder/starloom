@@ -39,6 +39,13 @@ describe('share links', () => {
     expect(c.stars).toEqual(['h1', 'h3'])
     expect(c.seq.every(i => i === BREAK || (i >= 0 && i < c.stars.length))).toBe(true)
     expect(c.seq.filter(i => i !== BREAK)).toEqual([0, 1, 0])
+    expect(back.dropped).toBe(1)
+  })
+  it('count a constellation of nothing but bad ids as dropped stars', () => {
+    const bad: Constellation = { id: 'b', name: 'x', hue: 0, stars: ['nope', 'g/0'], seq: [0, 1] }
+    const back = decodeSky(encodeSky({ ...sky, constellations: [bad] }))!
+    expect(back.constellations).toEqual([])
+    expect(back.dropped).toBe(2)
   })
   it('ignore an unknown target', () => {
     const back = decodeSky(encodeSky({ ...sky, target: { kind: 'body', id: 'pluto' as never } }))!

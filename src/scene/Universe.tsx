@@ -22,8 +22,7 @@ import { dist } from '../lib/space/vec'
 import { KM_PER_PC } from '../lib/space/units'
 import { apparentMag } from '../lib/space/photometry'
 import { MILKY_WAY } from '../lib/space/galaxy'
-import { TIER_SETTINGS, deviceTier } from '../lib/tier'
-import { setStarsPerChunk } from '../lib/space/octree'
+import { TIER_SETTINGS, applyTier, deviceTier } from '../lib/tier'
 import { galaxiesNear } from '../lib/space/cosmos'
 import { useSky } from '../state/store'
 import { extraNearest, flight, flyTo, stepFlight } from '../state/flight'
@@ -35,8 +34,9 @@ extraNearest.push(
 )
 
 /** Phones and small machines get lighter settings. */
-const tier = TIER_SETTINGS[deviceTier(navigator, innerWidth)]
-setStarsPerChunk(tier.starsPerChunk)
+const tierName = deviceTier(navigator, innerWidth)
+const tier = TIER_SETTINGS[tierName]
+applyTier(tierName)
 
 Object.assign(cam, homePose(clock.now(), typeof innerWidth === 'number' ? innerWidth / innerHeight : 1.6))
 

@@ -101,6 +101,16 @@ describe('free flight', () => {
     expect(f.yawVel).toBe(0)
   })
 
+  it('survives a frame with no time in it while dragging', () => {
+    const cam = pose([1e9, 0, 0], [1, 0, 0])
+    const f = newFlight()
+    stepFree(f, cam, { ...NO_INPUT, look: [0.05, 0.02] }, 1e9, 0, false)
+    stepFree(f, cam, NO_INPUT, 1e9, DT, false)
+    stepFree(f, cam, { ...NO_INPUT, wheel: 1, wheelDir: [1, 0, 0] }, 1e9, 0, false)
+    expect(Number.isFinite(cam.yaw) && Number.isFinite(cam.pitch)).toBe(true)
+    expect(finite(cam.pos) && finite(f.vel)).toBe(true)
+  })
+
   it('turns with a drag and keeps turning a little after', () => {
     const cam = pose([0, 0, 0], [1, 0, 0])
     const f = newFlight()

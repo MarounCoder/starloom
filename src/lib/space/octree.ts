@@ -12,22 +12,21 @@ import type { V3 } from './vec'
  */
 export const LEVELS = 10
 export const BASE_SIDE_PC = 25
-let starsPerChunk = 220
-export let STARS_PER_CHUNK = starsPerChunk
+/**
+ * Generation constants are frozen: star ids name stars by their index in a chunk, so changing any of
+ * these would silently move every generated star in every saved sky and shared link.
+ * Phones draw fewer of the stars (see renderTier in lib/tier.ts); they never generate fewer.
+ */
+export const STARS_PER_CHUNK = 220
+const BAND_RADIUS = 0.8
+const MAX_CROWD = 6
 /** Chunks are loaded when their box is within this many sides of the camera. */
 export const LOAD_RADIUS = 0.8
-const MAX_CROWD = 6
-
-export function setStarsPerChunk(n: number) {
-  starsPerChunk = n
-  STARS_PER_CHUNK = n
-  clearChunkCache()
-}
 
 export const sidePc = (k: number) => BASE_SIDE_PC * 2 ** k
 
 /** Faintest absolute magnitude for level k: such a star looks magnitude 6.5 at the load radius. */
-const faintAt = (k: number) => 11.5 - 5 * Math.log10(LOAD_RADIUS * sidePc(k))
+const faintAt = (k: number) => 11.5 - 5 * Math.log10(BAND_RADIUS * sidePc(k))
 
 /** [brightest, faintest] absolute magnitude stored at level k. */
 export function magBand(k: number): [number, number] {
@@ -121,7 +120,7 @@ export function genChunk(g: Galaxy, k: number, ix: number, iy: number, iz: numbe
   }
 
   // Crowded cores are capped at MAX_CROWD times the solar density, keeping their shape but not their cost.
-  const n = poisson(starsPerChunk * Math.min(dmax, MAX_CROWD), rand)
+  const n = poisson(STARS_PER_CHUNK * Math.min(dmax, MAX_CROWD), rand)
   for (let i = 0; i < n; i++) {
     const x = (rand() - 0.5) * s
     const y = (rand() - 0.5) * s

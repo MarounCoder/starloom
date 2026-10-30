@@ -19,6 +19,8 @@ export interface SharedSky {
   scale: ScaleId
   camera: { pos: V3; yaw: number; pitch: number } | null
   target: SharedTarget | null
+  /** Stars left out because their ids made no sense (only set when decoding). */
+  dropped?: number
 }
 
 export const HASH_KEY = 'sky='
@@ -68,6 +70,7 @@ export function decodeSky(str: string): SharedSky | null {
       camera = { pos: [d.cam[0], d.cam[1], d.cam[2]], yaw: d.cam[3], pitch: Math.max(-1.55, Math.min(1.55, d.cam[4])) }
     }
     const constellations: Constellation[] = []
+    let dropped = 0
     for (const row of d.c) {
       if (!Array.isArray(row) || row.length !== 4) return null
       const [name, hue, stars, seq] = row
@@ -77,10 +80,11 @@ export function decodeSky(str: string): SharedSky | null {
       const c: Constellation = { id: newId(), name: name.slice(0, 60), hue: Math.abs(Math.floor(hue)) % HUES.length, stars, seq }
       const bad = new Set<number>()
       stars.forEach((s: string, i: number) => !parseStarId(s) && bad.add(i))
+      dropped += bad.size
       const clean = withoutStars(c, bad)
       if (clean.stars.length) constellations.push(clean)
     }
-    return { constellations, instrument, scale, camera, target: parseTarget(d.t) }
+    return { constellations, instrument, scale, camera, target: parseTarget(d.t), dropped }
   } catch {
     return null
   }

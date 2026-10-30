@@ -12,6 +12,7 @@ import { dist, len, type V3 } from '../lib/space/vec'
 import { apparentMag } from '../lib/space/photometry'
 import { resolveStar } from '../lib/space/starId'
 import { universe } from '../state/universe'
+import { renderTier } from '../lib/tier'
 import { soundStar } from '../state/player'
 import { KM_PER_PC } from '../lib/space/units'
 import { labelLayer } from '../state/labels'
@@ -102,7 +103,7 @@ export function SkyOverlay() {
       }
       // Generated stars that look bright enough to tap.
       for (const ch of universe.loaded.values()) {
-        for (let i = 0; i < ch.count; i++) {
+        for (let i = 0; i < ch.count; i += renderTier.genStride) {
           const sp: V3 = [ch.origin[0] + ch.pos[i * 3] * KM_PER_PC, ch.origin[1] + ch.pos[i * 3 + 1] * KM_PER_PC, ch.origin[2] + ch.pos[i * 3 + 2] * KM_PER_PC]
           const p = project(sp)
           if (p.behind || Math.abs(p.x - x) > 40 || Math.abs(p.y - y) > 40) continue

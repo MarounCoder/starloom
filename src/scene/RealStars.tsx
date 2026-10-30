@@ -6,14 +6,20 @@ import { KM_PER_PC } from '../lib/space/units'
 import { cam } from '../state/camera'
 import { loadCatalog, useCatalog } from '../state/catalog'
 import { makeStarMaterial } from './starMaterial'
+import { sky } from '../state/store'
 
-/** Starts loading the catalogue once the first frame has been drawn, so the page paints first. */
+/** Starts loading the catalogue once the first frame has been drawn, so the page paints first; retries with backoff if it fails. */
 function useLoadAfterFirstFrame() {
   const started = useRef(false)
   useFrame(() => {
     if (started.current) return
     started.current = true
-    window.setTimeout(() => void loadCatalog().catch(() => undefined), 0)
+    const attempt = (n: number) =>
+      loadCatalog().catch(() => {
+        if (n === 0) sky.toast('Could not load the stars. Trying again…')
+        window.setTimeout(() => attempt(n + 1), Math.min(30_000, 2000 * 2 ** n))
+      })
+    window.setTimeout(() => attempt(0), 0)
   })
 }
 

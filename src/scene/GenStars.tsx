@@ -7,6 +7,7 @@ import type { GenChunk } from '../lib/space/octree'
 import { cam } from '../state/camera'
 import { stepUniverse, universe } from '../state/universe'
 import { makeStarMaterial } from './starMaterial'
+import { renderTier } from '../lib/tier'
 
 interface Live {
   points: THREE.Points
@@ -16,11 +17,21 @@ interface Live {
 const FADE_IN_S = 0.4
 
 function build(ch: GenChunk, material: THREE.ShaderMaterial): THREE.Points {
+  // Phones draw every n-th star; the chunk itself (and every star id) is the same everywhere.
+  const stride = renderTier.genStride
+  const n = Math.ceil(ch.count / stride)
+  const pos = new Float32Array(n * 3)
+  const mag = new Float32Array(n)
+  const color = new Float32Array(n * 3)
+  for (let k = 0; k < n; k++) {
+    const i = k * stride
+    pos.set(ch.pos.subarray(i * 3, i * 3 + 3), k * 3)
+    mag[k] = ch.absMag[i]
+    color.set(bvToRgb(ch.ci[i]), k * 3)
+  }
   const g = new THREE.BufferGeometry()
-  g.setAttribute('position', new THREE.BufferAttribute(ch.pos, 3))
-  g.setAttribute('absMag', new THREE.BufferAttribute(ch.absMag, 1))
-  const color = new Float32Array(ch.count * 3)
-  for (let i = 0; i < ch.count; i++) color.set(bvToRgb(ch.ci[i]), i * 3)
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  g.setAttribute('absMag', new THREE.BufferAttribute(mag, 1))
   g.setAttribute('color', new THREE.BufferAttribute(color, 3))
   const p = new THREE.Points(g, material)
   p.scale.setScalar(KM_PER_PC)

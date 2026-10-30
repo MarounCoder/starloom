@@ -8,8 +8,15 @@ export function deviceTier(nav: { hardwareConcurrency?: number; userAgent: strin
   return 'high'
 }
 
-/** What each tier gets. */
+/** What each tier gets. genStride: draw every n-th generated star (generation itself never changes). */
 export const TIER_SETTINGS = {
-  high: { dprMax: 2, segments: 64, milkyWay: '8k_stars_milky_way.jpg', starsPerChunk: 220, galaxyPoints: 7000, bloomScale: 1 },
-  low: { dprMax: 1.5, segments: 32, milkyWay: '2k_stars_milky_way.jpg', starsPerChunk: 110, galaxyPoints: 3500, bloomScale: 0.5 },
+  high: { dprMax: 2, segments: 64, milkyWay: '8k_stars_milky_way.jpg', genStride: 1, galaxyPoints: 7000, bloomScale: 1 },
+  low: { dprMax: 1.5, segments: 32, milkyWay: '2k_stars_milky_way.jpg', genStride: 2, galaxyPoints: 3500, bloomScale: 0.5 },
 } as const
+
+/** Render-side settings for the current device; read by the scene and by picking. */
+export const renderTier: { genStride: number } = { genStride: 1 }
+
+export function applyTier(t: Tier) {
+  renderTier.genStride = TIER_SETTINGS[t].genStride
+}

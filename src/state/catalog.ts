@@ -29,15 +29,20 @@ const url = (f: string) => `${import.meta.env.BASE_URL}data/${f}`
 
 let loading: Promise<StarCatalog> | null = null
 
-/** Fetch the real stars, figures and names once. Called after the first frame so the page paints first. */
-export function loadCatalog(): Promise<StarCatalog> {
+/** Fetch the real stars, figures and names once. Called after the first frame so the page paints first. A failed load can be retried. */
+export function loadCatalog(fetcher: typeof fetch = fetch): Promise<StarCatalog> {
   if (loading) return loading
   emit({ status: 'loading' })
+  const get = async (f: string) => {
+    const r = await fetcher(url(f))
+    if (!r.ok) throw new Error(`${f}: HTTP ${r.status}`)
+    return r
+  }
   loading = (async () => {
     const [bin, figs, names] = await Promise.all([
-      fetch(url('stars.bin')).then(r => r.arrayBuffer()),
-      fetch(url('constellations.json')).then(r => r.json() as Promise<{ abbr: string; lines: [number, number][] }[]>),
-      fetch(url('stars-names.json')).then(r => r.json() as Promise<StarNames>),
+      get('stars.bin').then(r => r.arrayBuffer()),
+      get('constellations.json').then(r => r.json() as Promise<{ abbr: string; lines: [number, number][] }[]>),
+      get('stars-names.json').then(r => r.json() as Promise<StarNames>),
     ])
     const catalog = parseCatalog(bin)
     const figures = figs.map(f => ({
@@ -51,7 +56,10 @@ export function loadCatalog(): Promise<StarCatalog> {
     emit({ status: 'ready', catalog, figures, names })
     return catalog
   })()
-  loading.catch(() => emit({ status: 'error' }))
+  loading.catch(() => {
+    loading = null
+    emit({ status: 'error' })
+  })
   return loading
 }
 
