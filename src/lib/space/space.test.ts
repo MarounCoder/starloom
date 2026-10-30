@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ECL_NORTH, eclToEq, eclipticLatDeg, eqToEcl, raDecToVec } from './frames'
+import { ECL_NORTH, eclToEq, eclipticLatDeg, eqToEcl, eqToGal, raDecToVec } from './frames'
 import { add, cross, dist, dot, len, norm, sub } from './vec'
 
 describe('vec', () => {
@@ -39,5 +39,11 @@ describe('frames', () => {
   it('measures ecliptic latitude', () => {
     expect(eclipticLatDeg(ECL_NORTH)).toBeCloseTo(90)
     expect(eclipticLatDeg([1, 0, 0])).toBeCloseTo(0)
+  })
+  it('turns equatorial into galactic coordinates', () => {
+    const gc = eqToGal(raDecToVec(266.405, -28.936))
+    expect(gc[0]).toBeCloseTo(1, 4)
+    const ngp = eqToGal(raDecToVec(192.859, 27.128))
+    expect(ngp[2]).toBeCloseTo(1, 4)
   })
 })

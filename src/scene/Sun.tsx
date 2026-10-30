@@ -18,7 +18,7 @@ export function Sun() {
     [glow],
   )
   const pointMat = useMemo(
-    () => new THREE.SpriteMaterial({ map: glow, color: new THREE.Color(1.3, 1.15, 0.9), blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false }),
+    () => new THREE.SpriteMaterial({ map: glow, color: new THREE.Color(1.3, 1.15, 0.9), blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: false, toneMapped: false }),
     [glow],
   )
 

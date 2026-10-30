@@ -22,3 +22,23 @@ export function eclipticLatDeg(dir: V3): number {
   const e = eqToEcl(norm(dir))
   return Math.asin(Math.max(-1, Math.min(1, e[2]))) / DEG
 }
+
+/** Rotation from equatorial J2000 to galactic coordinates (rows), as used by the Hipparcos catalogue. */
+export const EQ_TO_GAL: [V3, V3, V3] = [
+  [-0.0548755604, -0.8734370902, -0.4838350155],
+  [0.4941094279, -0.44482963, 0.7469822445],
+  [-0.867666149, -0.1980763734, 0.4559837762],
+]
+
+export const eqToGal = (v: V3): V3 => [
+  EQ_TO_GAL[0][0] * v[0] + EQ_TO_GAL[0][1] * v[1] + EQ_TO_GAL[0][2] * v[2],
+  EQ_TO_GAL[1][0] * v[0] + EQ_TO_GAL[1][1] * v[1] + EQ_TO_GAL[1][2] * v[2],
+  EQ_TO_GAL[2][0] * v[0] + EQ_TO_GAL[2][1] * v[1] + EQ_TO_GAL[2][2] * v[2],
+]
+
+/** Galactic → equatorial (the transpose). */
+export const galToEq = (v: V3): V3 => [
+  EQ_TO_GAL[0][0] * v[0] + EQ_TO_GAL[1][0] * v[1] + EQ_TO_GAL[2][0] * v[2],
+  EQ_TO_GAL[0][1] * v[0] + EQ_TO_GAL[1][1] * v[1] + EQ_TO_GAL[2][1] * v[2],
+  EQ_TO_GAL[0][2] * v[0] + EQ_TO_GAL[1][2] * v[1] + EQ_TO_GAL[2][2] * v[2],
+]

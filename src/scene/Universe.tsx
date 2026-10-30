@@ -4,6 +4,9 @@ import { ECL_NORTH } from '../lib/space/frames'
 import { anglesFor, cam, camForward, homePose, notifyCam } from '../state/camera'
 import { clock, positions, tick } from '../state/clock'
 import { SolarSystem } from './SolarSystem'
+import { MilkyWayBackdrop } from './MilkyWayBackdrop'
+import { RealStars } from './RealStars'
+import { Figures } from './Figures'
 
 Object.assign(cam, homePose(clock.now(), typeof innerWidth === 'number' ? innerWidth / innerHeight : 1.6))
 
@@ -42,6 +45,9 @@ export function Universe({ onContextLost }: { onContextLost?: () => void }) {
     >
       <color attach="background" args={['#05060d']} />
       <CameraRig />
+      <MilkyWayBackdrop />
+      <Figures />
+      <RealStars />
       <SolarSystem />
       <EffectComposer>
         <Bloom mipmapBlur luminanceThreshold={0.9} intensity={1.2} />
