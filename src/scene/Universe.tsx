@@ -10,6 +10,7 @@ import { RealStars } from './RealStars'
 import { Figures } from './Figures'
 import { FlightInput } from './FlightInput'
 import { SkyOverlay } from './SkyOverlay'
+import { three } from '../render/poster'
 import { GenStars } from './GenStars'
 import { Galaxies } from './Galaxies'
 import { Nebulae } from './Nebulae'
@@ -90,7 +91,8 @@ export function Universe({ onContextLost }: { onContextLost?: () => void }) {
       gl={{ logarithmicDepthBuffer: true, antialias: true }}
       camera={{ near: 0.5, far: 1e27, fov: cam.fovDeg, position: [0, 0, 0] }}
       dpr={[1, tier.dprMax]}
-      onCreated={({ gl }) => {
+      onCreated={({ gl, scene, camera }) => {
+        Object.assign(three, { gl, scene, camera })
         gl.domElement.addEventListener('webglcontextlost', e => {
           e.preventDefault()
           onContextLost?.()

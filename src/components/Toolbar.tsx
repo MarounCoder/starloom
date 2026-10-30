@@ -1,7 +1,9 @@
-import { Dices, CircleQuestionMark, ListMusic, PenLine, Play, Plus, Settings, Share2, Square, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Dices, CircleQuestionMark, Image, ListMusic, PenLine, Play, Plus, Settings, Share2, Square, Undo2 } from 'lucide-react'
 import { active, sky, useSky } from '../state/store'
 import { toggle, togglePlayAll } from '../state/player'
 import { randomName } from '../lib/names'
+import { exportPoster } from '../render/poster'
 import { Tool } from './ui'
 
 /** The brass bar: draw, play, and everything about your constellation. */
@@ -11,6 +13,19 @@ export function Toolbar() {
   const panel = useSky(s => s.panel)
   const mode = useSky(s => s.mode)
   const selected = useSky(s => s.selected)
+  const [saving, setSaving] = useState(false)
+
+  const poster = async () => {
+    setSaving(true)
+    try {
+      await exportPoster()
+      sky.toast('Poster saved to your downloads')
+    } catch {
+      sky.toast('The poster could not be made in this browser')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   // Play plays your active constellation, or the real one you selected.
   const target = cur?.seq.length ? cur.id : selected?.kind === 'figure' ? `fig:${selected.abbr}` : null
@@ -62,6 +77,7 @@ export function Toolbar() {
         <Tool icon={Undo2} label="Undo" onClick={sky.undo} disabled={!cur} title="Undo (Ctrl+Z)" />
         <Tool icon={Plus} label="New" onClick={sky.newConstellation} title="Start a new constellation (N)" />
         <span className="tools__sep" aria-hidden />
+        <Tool icon={Image} label={saving ? 'Saving…' : 'Poster'} disabled={saving} onClick={poster} title="Save this view as a star chart poster" />
         <Tool icon={Share2} label="Share" active={panel === 'share'} onClick={() => sky.openPanel('share')} />
         <Tool icon={Settings} label="Settings" active={panel === 'settings'} onClick={() => sky.openPanel('settings')} />
         <Tool icon={CircleQuestionMark} label="Help" active={panel === 'help'} onClick={() => sky.openPanel('help')} title="Help (?)" />
