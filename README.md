@@ -1,45 +1,48 @@
 # Starloom
 
-**An infinite night sky you can explore and play like an instrument.**
+**The real sky, a universe beyond it, and every star a note.**
 
-Tap the sky to place a star. Every star is a note. Stars placed one after another join into a constellation, and pressing Play turns it into a melody. Then drag and zoom to wander: past the Milky Way, through nebulae and star clusters, out to distant galaxies, and into a solar system where the planets sit where they really are today.
+Fly through the Solar System as it is right now, out among the real stars and the 88 constellations, and on into an endless universe of imagined galaxies. Tap stars to join them into constellations of your own. Every star is a note, so a constellation is a melody, and because the shape is drawn between the stars' true positions in space, the melody bends as you travel.
 
 **[Open Starloom →](https://marouncoder.github.io/starloom/)**
 
-![Starloom: Orion, the Big Dipper, Cassiopeia and a hand-drawn constellation over the Milky Way](docs/images/hero.png)
+![Earth in front of Orion, with a hand-drawn constellation joining Orion's shoulders to the Hyades](docs/images/hero.png)
 
 ## What you can do
 
-- **Draw music.** Tap to place stars; tap an existing star to join it again. Higher stars sing higher, measured from the constellation's first star, so a melody sounds the same wherever you draw it. The rhythm follows the distance between stars.
-- **Play the whole sky.** *Play all* loops every constellation in view at once, a small sky symphony.
-- **Drop in famous constellations.** Orion, the Big Dipper, Cassiopeia, Cygnus, Lyra, the Southern Cross, Scorpius and Leo, projected from their real star positions.
-- **Explore forever.** The universe is generated as you travel and is the same every time you come back. Three parallax layers give it depth.
-- **Visit the planets.** The Solar System starts at today's real planetary positions, then orbits at four days a second. Tap a planet for facts and to hear its hum. Slower planets sing lower, the way Kepler imagined.
-- **Catch shooting stars.** Each one leaves a wish behind.
-- **Watch the night turn.** The sky drifts from dusk to night to dawn, and the moon shows today's real phase. Or pin it to *Always night*.
-- **Choose a sound.** Chimes, glass bell, music box or soft pad, in major pentatonic, minor pentatonic, hirajōshi or lydian.
-- **Share by link.** The whole sky (constellations, instrument and view) is compressed into the URL. Nothing is uploaded.
-- **Print a poster.** Save the current view as a 2400 × 3300 star chart with a graticule, title and today's moon.
+- **Fly anywhere, fluidly.** Drag to look, scroll or pinch to fly toward the pointer, WASD for the keyboard. Speed scales with the distance to the nearest thing, so you creep past the Moon and cross between galaxies in seconds. You can never fly into a planet.
+- **See the real sky.** The planets and the major moons sit where they really are today, from [astronomy-engine](https://github.com/cosinekitty/astronomy). The 27,000 stars brighter than magnitude 7.5 come from the HYG catalogue, with their true distances and colours, and the 88 constellations are drawn between them.
+- **Draw constellations.** Tap **Draw**, then tap stars, real or generated, to join them. Undo, rename with the French name generator, start again.
+- **Play them.** Pitch comes from how high each star sits above the first one, as seen from wherever you are. The gap between notes comes from the angle between the stars, and loudness from their brightness. Fly to Alpha Centauri and your Orion sounds different. Real constellations play too, and **Make a copy** turns one into your own. **Play all** plays everything in view together.
+- **Keep going forever.** Past the real data, Starloom imagines the rest. It generates star fields, nebulae, star clusters and galaxies, and flying into a galaxy resolves it, level by level, into stars you can draw with. The same place always looks the same, and anything made up is labelled *generated*.
+- **Look things up.** Tap a planet, star, constellation or galaxy for its card. Search covers the planets, every named star and all 88 constellations, and a list of places to visit gets you started.
+- **Bend time.** Run the clock forward or backward, up to a week a second, and jump back to now.
+- **Share and print.** A link carries your constellations, where you are, what you are looking at and your sound, and nothing is uploaded. **Poster** saves the view as a 2400 × 3300 star chart.
 
 <p align="center">
-  <img src="docs/images/solar.png" alt="The Solar System with the planet card for the Sun open" width="66%">
-  <img src="docs/images/mobile.png" alt="Starloom on a phone" width="24%">
+  <img src="docs/images/saturn.png" alt="Saturn with its rings open, in March 2032 with time sped forward" width="49%">
+  <img src="docs/images/galaxy.png" alt="The Milky Way seen from far above, with the Sun marked" width="49%">
+</p>
+<p align="center">
+  <img src="docs/images/mobile.png" alt="Starloom on a phone" width="30%">
 </p>
 
 ## Controls
 
 | Input | Action |
 | --- | --- |
-| Tap / click | Place a star, or join an existing one |
-| Drag | Explore |
-| Scroll / pinch | Zoom |
-| <kbd>Space</kbd> | Play or stop this constellation |
-| <kbd>N</kbd> | New constellation |
-| <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Undo |
-| <kbd>P</kbd> | Famous constellations |
-| <kbd>+</kbd> / <kbd>−</kbd>, arrow keys | Zoom and pan |
-| <kbd>H</kbd> | Fly home |
-| <kbd>?</kbd> | Help |
+| Drag | Look around, or turn a planet you are circling |
+| Scroll / pinch | Fly toward the pointer, or back |
+| <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / arrows, <kbd>Q</kbd> <kbd>E</kbd> | Fly; down and up |
+| <kbd>Shift</kbd> | Four times faster |
+| Tap | What is that? |
+| <kbd>C</kbd> | Draw: tap stars to join them |
+| <kbd>Space</kbd> | Play or stop |
+| <kbd>N</kbd> / <kbd>Ctrl</kbd> + <kbd>Z</kbd> | New constellation / undo |
+| <kbd>F</kbd> / <kbd>L</kbd> | Constellation lines / labels |
+| <kbd>H</kbd> | Back to Earth |
+| <kbd>/</kbd> | Search |
+| <kbd>Esc</kbd> | Close, stop drawing, let go of a planet |
 
 ## Running it locally
 
@@ -50,31 +53,40 @@ npm test         # unit tests (Vitest)
 npm run build    # production build in dist/
 ```
 
+The star, constellation and texture files are committed. To rebuild them: `node scripts/build-lines.mjs`, then `node scripts/build-stars.mjs`, then `node scripts/fetch-textures.mjs`.
+
 ## How it works
 
-Starloom is React 19 + TypeScript on Vite, with one `<canvas>` for the sky and React for everything on top of it.
+Starloom is React 19 and TypeScript on Vite. three.js renders through React Three Fiber, and React draws the interface on top.
 
 ```
 src/
-  lib/           pure, tested logic
-    sky/         procedural starfield, Milky Way band, deep-sky objects, planets, moon phase, day cycle
-    music/       scales, Web Audio instruments, a shared audio engine with a small reverb
-    share.ts     sky ⇄ URL encoding (lz-string)
-  render/        the canvas renderer and the poster exporter (they share one renderScene function)
-  state/         Zustand store, camera, input handling, the melody player
-  components/    the HUD: toolbar, panels, cards
+  lib/space/    pure, tested: units and frames, ephemeris, the star catalogue, photometry,
+                flight maths, the generated universe, star ids, music, search
+  lib/          constellations, sharing, scales and instruments
+  state/        camera, clock, flight, catalogue loading, universe streaming, the player, the store
+  scene/        the three.js layer: planets, stars, galaxies, labels, input
+  components/   the interface: toolbar, search, cards, panels
+  render/       the poster
+scripts/        build the star and constellation data, fetch the textures
 ```
 
 A few details worth knowing:
 
-- **Deterministic infinity.** The sky is split into chunks. Each chunk's stars come from a seeded PRNG keyed on its grid coordinates, so nothing needs to be stored and every place is stable. Chunks are cached in a small LRU.
-- **Level of detail.** Stars in a chunk are sorted brightest first; when you zoom out, only the brightest share is drawn, so the screen density stays constant.
-- **Parallax.** Far layers see the camera at `cam × p` and zoom `zoom ^ p`, which makes galaxies drift slowly behind nebulae and nearby stars.
-- **Real sky data.** Planet longitudes come from their J2000 mean longitudes and orbital periods. The moon phase is computed from a known new moon and the synodic month.
-- **No re-renders while panning.** The camera lives in a plain mutable module, and the HUD reads a throttled snapshot of it through `useSyncExternalStore`.
+- **Floating origin.** Every position is a float64 in kilometres in the equatorial J2000 frame. The camera never moves: each frame, every object is placed at its own position minus the camera's, so only small, camera-relative numbers reach the GPU. A logarithmic depth buffer covers a range from 1 km to across the universe.
+- **A packed catalogue.** `scripts/build-stars.mjs` turns the 34 MB HYG CSV into a 670 KB binary of typed arrays: positions in parsecs, absolute magnitude, colour and constellation. It loads after the first frame. The shader computes each star's brightness from its real distance to the camera, every frame.
+- **A nested, deterministic universe.** Each 1 Mpc cell of space holds a few galaxies seeded from its coordinates. Inside a galaxy, stars live in a grid of ten levels, from 25 pc to 12.8 kpc cubes, and each level holds only one brightness band. Big cubes hold rare bright stars and small cubes hold common faint ones, and each level is generated only near the camera, so there are always about 50,000 stars on screen. A generated star's id names its galaxy, level, cube and index (`gmw/3/12,-40,7/18`), so share links stay valid forever.
+- **The real sky stays real.** Generated stars that would be brighter than magnitude 7.5 from Earth are never made. There are no made-up nebulae within 1,500 parsecs, and imagined galaxies only fade in once you are far from home.
+- **Music from where you stand.** A star's note is its ecliptic latitude relative to the constellation's first star, seen from the camera, at 2° per scale step. Turning your head never changes a melody. Moving does.
 
 Deployment is a GitHub Actions workflow that lints, tests, builds and publishes to GitHub Pages on every push to `main`.
 
-## Licence
+## Credits and licences
 
-[MIT](LICENSE)
+- Code: [MIT](LICENSE).
+- Stars: the [HYG database](https://github.com/astronexus/HYG-Database) v4.1 by David Nash, CC BY-SA 4.0. The repacked files in `public/data` are shared under the same licence.
+- Constellation figures: [Stellarium](https://github.com/Stellarium/stellarium)'s modern sky culture, CC BY-SA 4.0.
+- Planet, Moon, Sun and Milky Way images: [Solar System Scope](https://www.solarsystemscope.com/textures/), CC BY 4.0.
+- Ephemeris: [astronomy-engine](https://github.com/cosinekitty/astronomy) by Don Cross, MIT.
+
+Full details are in [`public/data/ATTRIBUTION.md`](public/data/ATTRIBUTION.md).

@@ -16,4 +16,9 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    // three.js objects are mutable by design: the scene updates materials and meshes every frame.
+    files: ['src/scene/**/*.{ts,tsx}'],
+    rules: { 'react-hooks/immutability': 'off' },
+  },
 )

@@ -1,36 +1,29 @@
-export interface Star {
-  x: number
-  y: number
-  /** Brightness 0..1. */
-  b: number
-}
+import type { StarId } from './space/starId'
+import { walkFigure } from './space/music'
 
 /** A pen-up in a sequence: no line is drawn across it and playback rests. */
 export const BREAK = -1
 
+/** A constellation of your own: real or generated stars joined in the order you tapped them. */
 export interface Constellation {
   id: string
   name: string
   hue: number
-  stars: Star[]
+  stars: StarId[]
   /** Order the stars are joined and played in; may revisit stars and contain BREAK. */
   seq: number[]
-  /** Set when it was dropped in from a preset. */
-  preset?: string
 }
 
 export const HUES = ['214,178,110', '154,184,238', '231,167,160', '150,214,190', '200,170,240', '240,214,150']
 
 export const newId = () => Math.random().toString(36).slice(2, 10)
 
-export function addStar(c: Constellation, star: Star): Constellation {
-  return { ...c, stars: [...c.stars, star], seq: [...c.seq, c.stars.length] }
-}
-
-/** Join an existing star to the end of the sequence; tapping the last star again does nothing. */
-export function linkStar(c: Constellation, index: number): Constellation {
-  if (index < 0 || index >= c.stars.length || c.seq[c.seq.length - 1] === index) return c
-  return { ...c, seq: [...c.seq, index] }
+/** Tap a star: a new one is added and joined; one already in the constellation is joined again. Tapping the last star again does nothing. */
+export function tapStar(c: Constellation, id: StarId): Constellation {
+  const idx = c.stars.indexOf(id)
+  if (idx === -1) return { ...c, stars: [...c.stars, id], seq: [...c.seq, c.stars.length] }
+  if (c.seq[c.seq.length - 1] === idx) return c
+  return { ...c, seq: [...c.seq, idx] }
 }
 
 /** Remove the last link, and the last star too if nothing else uses it. */
@@ -42,10 +35,7 @@ export function undoLast(c: Constellation): Constellation {
   return { ...c, seq, stars }
 }
 
-/** Pitch is measured from the first star, so a melody sounds the same wherever it is. */
-export const anchorY = (c: Constellation) => c.stars[0]?.y ?? 0
-
-/** Consecutive star pairs to draw as lines, skipping breaks. */
+/** Consecutive star pairs to draw as lines, skipping breaks: [a, b, seqIndex]. */
 export function segments(c: Constellation): [number, number, number][] {
   const out: [number, number, number][] = []
   for (let k = 1; k < c.seq.length; k++) {
@@ -56,16 +46,39 @@ export function segments(c: Constellation): [number, number, number][] {
   return out
 }
 
-export function bounds(c: Constellation) {
-  let x0 = Infinity
-  let y0 = Infinity
-  let x1 = -Infinity
-  let y1 = -Infinity
-  for (const s of c.stars) {
-    x0 = Math.min(x0, s.x)
-    y0 = Math.min(y0, s.y)
-    x1 = Math.max(x1, s.x)
-    y1 = Math.max(y1, s.y)
+/** "Make a copy" of a real figure: its stars, walked from the brightest, as a constellation you can edit. */
+export function figureToConstellation(segs: [number, number][], idOf: (i: number) => StarId, magOf: (i: number) => number, name: string, hue: number): Constellation {
+  const nodes = [...new Set(segs.flat())]
+  const walk = walkFigure(segs, new Map(nodes.map(i => [i, magOf(i)])))
+  const stars: StarId[] = []
+  const index = new Map<number, number>()
+  const seq = walk.map(i => {
+    if (i === BREAK) return BREAK
+    if (!index.has(i)) {
+      index.set(i, stars.length)
+      stars.push(idOf(i))
+    }
+    return index.get(i)!
+  })
+  return { id: newId(), name, hue, stars, seq }
+}
+
+/** Remove some stars: links through them become rests, the rest are re-indexed. */
+export function withoutStars(c: Constellation, drop: Set<number>): Constellation {
+  if (!drop.size) return c
+  const map = new Map<number, number>()
+  const stars: StarId[] = []
+  c.stars.forEach((s, i) => {
+    if (drop.has(i)) return
+    map.set(i, stars.length)
+    stars.push(s)
+  })
+  const seq: number[] = []
+  for (const i of c.seq) {
+    const j = i === BREAK || !map.has(i) ? BREAK : map.get(i)!
+    if (j === BREAK && (seq.length === 0 || seq[seq.length - 1] === BREAK)) continue
+    seq.push(j)
   }
-  return { x0, y0, x1, y1 }
+  while (seq[seq.length - 1] === BREAK) seq.pop()
+  return { ...c, stars, seq }
 }

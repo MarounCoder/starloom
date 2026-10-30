@@ -1,5 +1,3 @@
-import { clamp } from '../rng'
-
 export type ScaleId = 'pentatonic' | 'minor' | 'hirajoshi' | 'lydian'
 
 export const SCALES: Record<ScaleId, { label: string; steps: number[] }> = {
@@ -9,18 +7,9 @@ export const SCALES: Record<ScaleId, { label: string; steps: number[] }> = {
   lydian: { label: 'Lydian', steps: [0, 2, 4, 6, 7, 9, 11] },
 }
 
-/** World units between neighbouring scale degrees. */
-export const STEP_WORLD = 45
+/** The first star of a constellation sits on this degree; the range is 0..MAX_DEGREE. */
 export const ANCHOR_DEGREE = 7
 export const MAX_DEGREE = 21
-
-/**
- * Scale degree of a star, relative to its constellation's first star:
- * the anchor sits on degree 7 and every 45 world units higher is one degree up.
- */
-export function degreeFor(y: number, anchorY: number): number {
-  return clamp(Math.round((anchorY - y) / STEP_WORLD) + ANCHOR_DEGREE, 0, MAX_DEGREE)
-}
 
 /** Root is D3 (MIDI 50). */
 export function degreeToMidi(scale: ScaleId, degree: number, root = 50): number {

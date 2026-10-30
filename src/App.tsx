@@ -1,30 +1,53 @@
-import { SkyCanvas } from './components/SkyCanvas'
+import { useState } from 'react'
+import { Universe } from './scene/Universe'
 import { Brand } from './components/Brand'
-import { Navigator } from './components/Navigator'
+import { NoWebGL } from './components/NoWebGL'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { webglSupport } from './lib/webgl'
+import { InfoCard } from './components/InfoCard'
+import { Search } from './components/Search'
+import { TimeBar } from './components/TimeBar'
 import { Toolbar } from './components/Toolbar'
+import { Toasts } from './components/Toasts'
+import { useKeyboard, useResolveStars, useSharedLink } from './hooks'
 import { Panels } from './components/Panels'
-import { BodyCard, Notices, Welcome, WishCard } from './components/Cards'
-import { useKeyboard, useSharedLink } from './hooks'
+import { Welcome } from './components/Welcome'
+import { labelLayer } from './state/labels'
+
+const supported = webglSupport() === 'ok'
 
 export function App() {
-  useSharedLink()
+  const [lost, setLost] = useState(false)
   useKeyboard()
+  useSharedLink()
+  useResolveStars()
+  if (!supported || lost) return <NoWebGL lost={lost} />
   return (
     <>
-      <SkyCanvas />
+      <div
+        className="labels"
+        ref={el => {
+          labelLayer.root = el
+        }}
+      />
+      <ErrorBoundary fallback={<NoWebGL />}>
+        <Universe onContextLost={() => setLost(true)} />
+      </ErrorBoundary>
       <div className="hud">
         <header className="hud__top">
-          <Brand />
-          <Navigator />
+          <div className="hud__left">
+            <Brand />
+            <Search />
+          </div>
+          <TimeBar />
         </header>
-        <Notices />
+        <Toasts />
         <footer className="hud__bottom">
           <Panels />
           <Toolbar />
         </footer>
       </div>
-      <BodyCard />
-      <WishCard />
+      <InfoCard />
       <Welcome />
     </>
   )

@@ -1,68 +1,90 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
-import { BREAK, HUES, newId, type Constellation } from './constellations'
+import { BREAK, HUES, newId, withoutStars, type Constellation } from './constellations'
 import { SCALES, type ScaleId } from './music/scales'
 import { INSTRUMENTS, type InstrumentId } from './music/instruments'
-import { MAX_ZOOM, MIN_ZOOM, type Camera } from './camera'
+import { BODIES, type BodyId } from './space/bodies'
+import { IAU } from './space/iau'
+import { parseStarId } from './space/starId'
+import type { V3 } from './space/vec'
+
+export type SharedTarget =
+  | { kind: 'body'; id: BodyId }
+  | { kind: 'star'; id: string }
+  | { kind: 'figure'; abbr: string }
+  | { kind: 'galaxy'; id: string }
 
 export interface SharedSky {
   constellations: Constellation[]
   instrument: InstrumentId
   scale: ScaleId
-  camera: Camera | null
+  camera: { pos: V3; yaw: number; pitch: number } | null
+  target: SharedTarget | null
+  /** Stars left out because their ids made no sense (only set when decoding). */
+  dropped?: number
 }
 
 export const HASH_KEY = 'sky='
 const MAX_CONSTELLATIONS = 300
 const MAX_STARS = 600
 
-/** Pack a sky into a URL-safe string: positions rounded to whole world units. */
+const targetKey = (t: SharedTarget) => (t.kind === 'body' ? `body:${t.id}` : t.kind === 'star' ? `star:${t.id}` : t.kind === 'figure' ? `fig:${t.abbr}` : `gal:${t.id}`)
+
+function parseTarget(k: unknown): SharedTarget | null {
+  if (typeof k !== 'string') return null
+  const at = k.indexOf(':')
+  const [kind, id] = [k.slice(0, at), k.slice(at + 1)]
+  if (kind === 'body' && id in BODIES) return { kind: 'body', id: id as BodyId }
+  if (kind === 'star' && parseStarId(id)) return { kind: 'star', id }
+  if (kind === 'fig' && IAU.some(c => c.abbr === id)) return { kind: 'figure', abbr: id }
+  if (kind === 'gal' && /^(mw|-?\d+,-?\d+,-?\d+\.\d+)$/.test(id)) return { kind: 'galaxy', id }
+  return null
+}
+
+/** Pack a sky into a URL-safe string: positions to the kilometre, angles to 1e-4 rad. */
 export function encodeSky(sky: SharedSky): string {
+  const cam = sky.camera
   const payload = {
-    v: 1,
+    v: 2,
     i: sky.instrument,
     s: sky.scale,
-    cam: sky.camera ? [Math.round(sky.camera.x), Math.round(sky.camera.y), Math.round(sky.camera.zoom * 1000) / 1000] : null,
-    c: sky.constellations
-      .filter(c => c.stars.length)
-      .map(c => [c.name, c.hue, c.stars.flatMap(s => [Math.round(s.x), Math.round(s.y), Math.round(s.b * 100)]), c.seq, c.preset ?? 0]),
+    cam: cam ? [...cam.pos.map(Math.round), Math.round(cam.yaw * 1e4) / 1e4, Math.round(cam.pitch * 1e4) / 1e4] : null,
+    t: sky.target ? targetKey(sky.target) : null,
+    c: sky.constellations.filter(c => c.stars.length).map(c => [c.name, c.hue, c.stars, c.seq]),
   }
   return compressToEncodedURIComponent(JSON.stringify(payload))
 }
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 
-/** Unpack a shared sky; anything malformed returns null instead of throwing. */
+/** Unpack a shared sky. Anything malformed returns null; a star id that makes no sense is dropped on its own. */
 export function decodeSky(str: string): SharedSky | null {
   try {
     const json = decompressFromEncodedURIComponent(str)
     if (!json) return null
     const d = JSON.parse(json)
-    if (!d || d.v !== 1 || !Array.isArray(d.c) || d.c.length > MAX_CONSTELLATIONS) return null
+    if (!d || d.v !== 2 || !Array.isArray(d.c) || d.c.length > MAX_CONSTELLATIONS) return null
     const instrument: InstrumentId = d.i in INSTRUMENTS ? d.i : 'chimes'
     const scale: ScaleId = d.s in SCALES ? d.s : 'pentatonic'
-    let camera: Camera | null = null
-    if (Array.isArray(d.cam) && d.cam.length === 3 && d.cam.every(isNum)) {
-      camera = { x: d.cam[0], y: d.cam[1], zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, d.cam[2])) }
+    let camera: SharedSky['camera'] = null
+    if (Array.isArray(d.cam) && d.cam.length === 5 && d.cam.every(isNum)) {
+      camera = { pos: [d.cam[0], d.cam[1], d.cam[2]], yaw: d.cam[3], pitch: Math.max(-1.55, Math.min(1.55, d.cam[4])) }
     }
     const constellations: Constellation[] = []
+    let dropped = 0
     for (const row of d.c) {
-      if (!Array.isArray(row) || row.length < 4) return null
-      const [name, hue, flat, seq, preset] = row
-      if (typeof name !== 'string' || !isNum(hue) || !Array.isArray(flat) || !Array.isArray(seq)) return null
-      if (flat.length % 3 || flat.length / 3 > MAX_STARS || !flat.every(isNum)) return null
-      const stars = []
-      for (let i = 0; i < flat.length; i += 3) stars.push({ x: flat[i], y: flat[i + 1], b: Math.min(1, Math.max(0, flat[i + 2] / 100)) })
+      if (!Array.isArray(row) || row.length !== 4) return null
+      const [name, hue, stars, seq] = row
+      if (typeof name !== 'string' || !isNum(hue) || !Array.isArray(stars) || !Array.isArray(seq)) return null
+      if (stars.length > MAX_STARS || !stars.every(s => typeof s === 'string')) return null
       if (!seq.every(k => k === BREAK || (Number.isInteger(k) && k >= 0 && k < stars.length))) return null
-      constellations.push({
-        id: newId(),
-        name: name.slice(0, 60),
-        hue: Math.abs(Math.floor(hue)) % HUES.length,
-        stars,
-        seq,
-        ...(typeof preset === 'string' ? { preset } : {}),
-      })
+      const c: Constellation = { id: newId(), name: name.slice(0, 60), hue: Math.abs(Math.floor(hue)) % HUES.length, stars, seq }
+      const bad = new Set<number>()
+      stars.forEach((s: string, i: number) => !parseStarId(s) && bad.add(i))
+      dropped += bad.size
+      const clean = withoutStars(c, bad)
+      if (clean.stars.length) constellations.push(clean)
     }
-    return { constellations, instrument, scale, camera }
+    return { constellations, instrument, scale, camera, target: parseTarget(d.t), dropped }
   } catch {
     return null
   }

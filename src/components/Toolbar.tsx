@@ -1,71 +1,68 @@
 import { useState } from 'react'
-import { Dices, Image, ListMusic, Play, Plus, Settings, Share2, Square, Star, Undo2 } from 'lucide-react'
-import { current, sky, useSky } from '../state/store'
+import { Dices, CircleQuestionMark, Image, ListMusic, PenLine, Play, Plus, Settings, Share2, Square, Undo2 } from 'lucide-react'
+import { active, sky, useSky } from '../state/store'
 import { toggle, togglePlayAll } from '../state/player'
-import { clock } from '../state/fx'
-import { view } from '../state/view'
 import { randomName } from '../lib/names'
 import { exportPoster } from '../render/poster'
 import { Tool } from './ui'
 
+/** The brass bar: draw, play, and everything about your constellation. */
 export function Toolbar() {
-  const cur = useSky(s => current(s))
+  const cur = useSky(s => active(s))
   const playing = useSky(s => s.playing)
   const panel = useSky(s => s.panel)
+  const mode = useSky(s => s.mode)
+  const selected = useSky(s => s.selected)
   const [saving, setSaving] = useState(false)
-
-  const isPlaying = !!cur && playing.includes(cur.id)
-  const openPanel = (p: typeof panel) => useSky.setState({ panel: panel === p ? null : p, placing: null })
 
   const poster = async () => {
     setSaving(true)
-    const s = useSky.getState()
     try {
-      await exportPoster({
-        cam: view.cam,
-        screenW: view.w,
-        screenH: view.h,
-        constellations: s.constellations,
-        currentId: s.currentId,
-        solarDays: clock.solarDays,
-      })
+      await exportPoster()
       sky.toast('Poster saved to your downloads')
     } catch {
-      sky.toast('The poster could not be created in this browser')
+      sky.toast('The poster could not be made in this browser')
     } finally {
       setSaving(false)
     }
   }
 
+  // Play plays your active constellation, or the real one you selected.
+  const target = cur?.seq.length ? cur.id : selected?.kind === 'figure' ? `fig:${selected.abbr}` : null
+  const isPlaying = !!target && playing.includes(target)
+
   return (
     <nav className="toolbar" aria-label="Sky controls">
-      <div className="namefield">
-        <label htmlFor="constellation-name" className="sr-only">
-          Constellation name
-        </label>
-        <input
-          id="constellation-name"
-          type="text"
-          maxLength={48}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="Tap the sky to begin"
-          value={cur?.name ?? ''}
-          disabled={!cur}
-          onChange={e => sky.rename(e.target.value)}
-        />
-        <button type="button" className="dice" onClick={() => cur && sky.rename(randomName())} disabled={!cur} title="Give it a new name" aria-label="Give it a new name">
-          <Dices size={16} strokeWidth={1.6} aria-hidden />
-        </button>
-      </div>
+      {(cur || mode === 'draw') && (
+        <div className="namefield">
+          <label htmlFor="constellation-name" className="sr-only">
+            Constellation name
+          </label>
+          <input
+            id="constellation-name"
+            type="text"
+            maxLength={48}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="Tap stars to begin"
+            value={cur?.name ?? ''}
+            disabled={!cur}
+            onChange={e => sky.rename(e.target.value)}
+          />
+          <button type="button" className="dice" onClick={() => cur && sky.rename(randomName())} disabled={!cur} title="Give it a new name" aria-label="Give it a new name">
+            <Dices size={16} strokeWidth={1.6} aria-hidden />
+          </button>
+        </div>
+      )}
       <div className="tools">
+        <Tool icon={PenLine} label={mode === 'draw' ? 'Drawing' : 'Draw'} active={mode === 'draw'} keepLabel onClick={sky.toggleDraw} title="Draw: tap stars to join them (C)" />
         <Tool
           icon={isPlaying ? Square : Play}
           label={isPlaying ? 'Stop' : 'Play'}
           primary
           keepLabel
-          disabled={!cur || !cur.seq.length}
-          onClick={() => cur && toggle(cur.id)}
+          disabled={!target}
+          onClick={() => target && toggle(target)}
           title="Play this constellation (Space)"
         />
         <Tool
@@ -73,18 +70,17 @@ export function Toolbar() {
           label={playing.length ? 'Stop all' : 'Play all'}
           active={playing.length > 1}
           onClick={() => {
-            const n = togglePlayAll()
-            if (n === 0) sky.toast('No constellations in view to play')
+            if (togglePlayAll() === 0) sky.toast('No constellations in view to play')
           }}
           title="Play every constellation in view together"
         />
         <Tool icon={Undo2} label="Undo" onClick={sky.undo} disabled={!cur} title="Undo (Ctrl+Z)" />
         <Tool icon={Plus} label="New" onClick={sky.newConstellation} title="Start a new constellation (N)" />
         <span className="tools__sep" aria-hidden />
-        <Tool icon={Star} label="Presets" active={panel === 'presets'} onClick={() => openPanel('presets')} title="Drop in a famous constellation (P)" />
-        <Tool icon={Share2} label="Share" active={panel === 'share'} onClick={() => openPanel('share')} />
         <Tool icon={Image} label={saving ? 'Saving…' : 'Poster'} disabled={saving} onClick={poster} title="Save this view as a star chart poster" />
-        <Tool icon={Settings} label="Settings" active={panel === 'settings'} onClick={() => openPanel('settings')} />
+        <Tool icon={Share2} label="Share" active={panel === 'share'} onClick={() => sky.openPanel('share')} />
+        <Tool icon={Settings} label="Settings" active={panel === 'settings'} onClick={() => sky.openPanel('settings')} />
+        <Tool icon={CircleQuestionMark} label="Help" active={panel === 'help'} onClick={() => sky.openPanel('help')} title="Help (?)" />
       </div>
     </nav>
   )

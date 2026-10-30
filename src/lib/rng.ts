@@ -40,3 +40,41 @@ export function gauss(rand: () => number): number {
 
 export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+/** Deterministic 32-bit hash of an integer 3D cell and a seed. */
+export const hash3 = (x: number, y: number, z: number, seed = 0) => hash2(x, y, hash2(z | 0, seed | 0, 0x5bd1e995))
+
+/** FNV-1a hash of a string. */
+export function hashStr(s: string): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return h >>> 0
+}
+
+/** A standard normal sample (Box–Muller). */
+export function normal(rand: () => number): number {
+  const u = Math.max(rand(), 1e-12)
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand())
+}
+
+const cell3 = (x: number, y: number, z: number, seed: number) => hash3(x, y, z, seed) / 4294967296
+
+/** Smooth 3D value noise in [0, 1]. */
+export function noise3(x: number, y: number, z: number, seed = 0): number {
+  const x0 = Math.floor(x)
+  const y0 = Math.floor(y)
+  const z0 = Math.floor(z)
+  const fx = smooth(x - x0)
+  const fy = smooth(y - y0)
+  const fz = smooth(z - z0)
+  const l = (a: number, b: number, t: number) => a + (b - a) * t
+  const c = (dx: number, dy: number, dz: number) => cell3(x0 + dx, y0 + dy, z0 + dz, seed)
+  return l(
+    l(l(c(0, 0, 0), c(1, 0, 0), fx), l(c(0, 1, 0), c(1, 1, 0), fx), fy),
+    l(l(c(0, 0, 1), c(1, 0, 1), fx), l(c(0, 1, 1), c(1, 1, 1), fx), fy),
+    fz,
+  )
+}
