@@ -1,8 +1,11 @@
 name: Deploy to GitHub Pages
 
+# While Starloom 3D is in development, `main` is served at /starloom/ and the
+# `3d` branch is served as a preview at /starloom/next/. A push to either
+# branch rebuilds both.
 on:
   push:
-    branches: [main]
+    branches: [main, 3d]
   workflow_dispatch:
 
 permissions:
@@ -19,17 +22,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
+          path: site
+      - id: next
+        uses: actions/checkout@v5
+        continue-on-error: true
+        with:
+          ref: 3d
+          path: site-next
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
+      - name: Build main
+        working-directory: site
+        env:
+          STARLOOM_BASE: /starloom/
+        run: npm ci && npm run lint && npm test && npm run build
+      - name: Build preview
+        if: steps.next.outcome == 'success'
+        working-directory: site-next
+        env:
+          STARLOOM_BASE: /starloom/next/
+        run: npm ci && npm run lint && npm test && npm run build
+      - name: Merge preview into the site
+        if: steps.next.outcome == 'success'
+        run: cp -r site-next/dist site/dist/next
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: site/dist
 
   deploy:
     needs: build
