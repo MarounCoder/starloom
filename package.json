@@ -1,8 +1,8 @@
 {
   "name": "starloom",
   "private": true,
-  "version": "1.0.0",
-  "description": "An infinite night sky you can explore and play like an instrument.",
+  "version": "2.0.0",
+  "description": "The real sky, a universe beyond it, and every star a note.",
   "type": "module",
   "license": "MIT",
   "scripts": {
@@ -53,7 +53,8 @@
     "night-sky",
     "constellations",
     "web-audio",
-    "canvas",
+    "three.js",
+    "webgl",
     "react",
     "generative"
   ],
