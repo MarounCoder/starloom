@@ -13,6 +13,7 @@ export interface Settings {
   muted: boolean
   figures: boolean
   labels: boolean
+  effects: boolean
 }
 
 export type Selection =
@@ -42,7 +43,7 @@ export interface SkyState extends Saved {
 
 export const STORAGE_KEY = 'starloom:sky:v2'
 
-const DEFAULT_SETTINGS: Settings = { instrument: 'chimes', scale: 'pentatonic', muted: false, figures: true, labels: true }
+const DEFAULT_SETTINGS: Settings = { instrument: 'chimes', scale: 'pentatonic', muted: false, figures: true, labels: true, effects: true }
 
 function blank(): Saved {
   return { constellations: [], activeId: null, settings: DEFAULT_SETTINGS, welcomed: false }

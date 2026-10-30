@@ -10,6 +10,7 @@ import { Toolbar } from './components/Toolbar'
 import { Toasts } from './components/Toasts'
 import { useKeyboard, useResolveStars, useSharedLink } from './hooks'
 import { Panels } from './components/Panels'
+import { Welcome } from './components/Welcome'
 import { labelLayer } from './state/labels'
 
 const supported = webglSupport() === 'ok'
@@ -44,6 +45,7 @@ export function App() {
         </footer>
       </div>
       <InfoCard />
+      <Welcome />
     </>
   )
 }

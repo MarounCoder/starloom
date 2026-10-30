@@ -21,6 +21,8 @@ import { dist } from '../lib/space/vec'
 import { KM_PER_PC } from '../lib/space/units'
 import { apparentMag } from '../lib/space/photometry'
 import { MILKY_WAY } from '../lib/space/galaxy'
+import { TIER_SETTINGS, deviceTier } from '../lib/tier'
+import { setStarsPerChunk } from '../lib/space/octree'
 import { galaxiesNear } from '../lib/space/cosmos'
 import { useSky } from '../state/store'
 import { extraNearest, flight, flyTo, stepFlight } from '../state/flight'
@@ -30,6 +32,10 @@ extraNearest.push(
   () => nearestGenStarsKm().reduce((m, p) => Math.min(m, dist(p, cam.pos)), Infinity),
   nearestGalaxyKm,
 )
+
+/** Phones and small machines get lighter settings. */
+const tier = TIER_SETTINGS[deviceTier(navigator, innerWidth)]
+setStarsPerChunk(tier.starsPerChunk)
 
 Object.assign(cam, homePose(clock.now(), typeof innerWidth === 'number' ? innerWidth / innerHeight : 1.6))
 
@@ -77,12 +83,13 @@ function CameraRig() {
 
 export function Universe({ onContextLost }: { onContextLost?: () => void }) {
   const figuresOn = useSky(s => s.settings.figures)
+  const effects = useSky(s => s.settings.effects)
   return (
     <Canvas
       className="sky"
       gl={{ logarithmicDepthBuffer: true, antialias: true }}
       camera={{ near: 0.5, far: 1e27, fov: cam.fovDeg, position: [0, 0, 0] }}
-      dpr={[1, 2]}
+      dpr={[1, tier.dprMax]}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener('webglcontextlost', e => {
           e.preventDefault()
@@ -94,19 +101,21 @@ export function Universe({ onContextLost }: { onContextLost?: () => void }) {
       <CameraRig />
       <FlightInput />
       <SkyOverlay />
-      <MilkyWayBackdrop />
+      <MilkyWayBackdrop hi={tier.milkyWay.startsWith('8k')} />
       <DistantGalaxies />
       <Figures visible={figuresOn} />
       <GenStars />
-      <Galaxies />
+      <Galaxies points={tier.galaxyPoints} />
       <Nebulae />
       <RealStars />
       <NearStar />
       <UserFigures />
-      <SolarSystem />
-      <EffectComposer>
-        <Bloom mipmapBlur luminanceThreshold={0.9} intensity={1.2} />
-      </EffectComposer>
+      <SolarSystem segments={tier.segments} />
+      {effects && (
+        <EffectComposer>
+          <Bloom mipmapBlur luminanceThreshold={0.9} intensity={1.2} resolutionScale={tier.bloomScale} />
+        </EffectComposer>
+      )}
     </Canvas>
   )
 }

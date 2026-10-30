@@ -406,3 +406,10 @@ button { font: inherit; color: inherit; }
   .timebar__btn { min-width: 26px; }
   .timebar__readout { display: none; }
 }
+.welcome__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.sheet__h3 { margin: 18px 0 4px; font-family: var(--mono); font-size: 0.64rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+.credits { margin: 6px 0 0; padding-left: 18px; color: var(--haze); font-size: 0.85rem; line-height: 1.6; }
+.credits a { color: var(--brass); }
+.sheet__lede b { color: var(--brass); font-weight: 400; }
+/* The HUD sits above the label layer, so panels hide the labels behind them. */
+.hud { z-index: 2; }
