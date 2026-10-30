@@ -8,7 +8,8 @@ import { Search } from './components/Search'
 import { TimeBar } from './components/TimeBar'
 import { Toolbar } from './components/Toolbar'
 import { Toasts } from './components/Toasts'
-import { useKeyboard } from './hooks'
+import { useKeyboard, useResolveStars, useSharedLink } from './hooks'
+import { Panels } from './components/Panels'
 import { labelLayer } from './state/labels'
 
 const supported = webglSupport() === 'ok'
@@ -16,6 +17,8 @@ const supported = webglSupport() === 'ok'
 export function App() {
   const [lost, setLost] = useState(false)
   useKeyboard()
+  useSharedLink()
+  useResolveStars()
   if (!supported || lost) return <NoWebGL lost={lost} />
   return (
     <>
@@ -36,6 +39,7 @@ export function App() {
         </header>
         <Toasts />
         <footer className="hud__bottom">
+          <Panels />
           <Toolbar />
         </footer>
       </div>

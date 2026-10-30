@@ -18,6 +18,8 @@ import { DistantGalaxies } from './DistantGalaxies'
 import { UserFigures } from './UserFigures'
 import { nearestGalaxyKm, nearestGenStarsKm, universe } from '../state/universe'
 import { dist } from '../lib/space/vec'
+import { KM_PER_PC } from '../lib/space/units'
+import { apparentMag } from '../lib/space/photometry'
 import { MILKY_WAY } from '../lib/space/galaxy'
 import { galaxiesNear } from '../lib/space/cosmos'
 import { useSky } from '../state/store'
@@ -35,6 +37,18 @@ Object.assign(cam, homePose(clock.now(), typeof innerWidth === 'number' ? innerW
 const debug = typeof location !== 'undefined' && location.search.includes('debug')
 const hook = {
   frames: 0, cam, clock, positions, anglesFor, flyTo, flight, universe, MILKY_WAY, galaxiesNear,
+  /** Screen points of the brightest on-screen generated stars, for the screenshot scripts. */
+  brightGenOnScreen(n: number) {
+    const out: { x: number; y: number; m: number }[] = []
+    for (const ch of universe.loaded.values())
+      for (let i = 0; i < ch.count; i++) {
+        const sp: [number, number, number] = [ch.origin[0] + ch.pos[i * 3] * KM_PER_PC, ch.origin[1] + ch.pos[i * 3 + 1] * KM_PER_PC, ch.origin[2] + ch.pos[i * 3 + 2] * KM_PER_PC]
+        const p = project(sp)
+        if (p.behind || p.x < 80 || p.y < 160 || p.x > innerWidth - 80 || p.y > innerHeight - 160) continue
+        out.push({ x: p.x, y: p.y, m: apparentMag(ch.absMag[i], dist(sp, cam.pos) / KM_PER_PC) })
+      }
+    return out.sort((a, b) => a.m - b.m).slice(0, n)
+  },
   /** Screen point of a catalogue star by Hipparcos number, for the screenshot scripts. */
   screenOfStar(hip: number) {
     const i = catalogState().catalog?.byHip.get(hip)

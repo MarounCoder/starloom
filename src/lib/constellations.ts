@@ -62,3 +62,23 @@ export function figureToConstellation(segs: [number, number][], idOf: (i: number
   })
   return { id: newId(), name, hue, stars, seq }
 }
+
+/** Remove some stars: links through them become rests, the rest are re-indexed. */
+export function withoutStars(c: Constellation, drop: Set<number>): Constellation {
+  if (!drop.size) return c
+  const map = new Map<number, number>()
+  const stars: StarId[] = []
+  c.stars.forEach((s, i) => {
+    if (drop.has(i)) return
+    map.set(i, stars.length)
+    stars.push(s)
+  })
+  const seq: number[] = []
+  for (const i of c.seq) {
+    const j = i === BREAK || !map.has(i) ? BREAK : map.get(i)!
+    if (j === BREAK && (seq.length === 0 || seq[seq.length - 1] === BREAK)) continue
+    seq.push(j)
+  }
+  while (seq[seq.length - 1] === BREAK) seq.pop()
+  return { ...c, stars, seq }
+}

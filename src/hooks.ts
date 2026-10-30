@@ -1,7 +1,11 @@
 import { useEffect } from 'react'
 import { active, sky, useSky } from './state/store'
 import { toggle } from './state/player'
-import { flyTo } from './state/flight'
+import { cancelTravel, exitOrbit, flyTo } from './state/flight'
+import { cam } from './state/camera'
+import { catalogState, useCatalog } from './state/catalog'
+import { decodeSky, readHash } from './lib/share'
+import { resolveSky } from './lib/space/resolve'
 
 const typing = (t: EventTarget | null) => {
   const el = t as HTMLElement | null
@@ -55,5 +59,50 @@ export function useKeyboard() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [])
+}
+
+function resolveNow() {
+  const { catalog } = catalogState()
+  const s = useSky.getState()
+  const { constellations, dropped } = resolveSky(s.constellations, catalog)
+  if (dropped) {
+    sky.setConstellations(constellations)
+    sky.toast(dropped === 1 ? 'One star could not be found and was left out' : `${dropped} stars could not be found and were left out`)
+  }
+}
+
+/** Once the real catalogue is in, check every saved or shared star still exists. */
+export function useResolveStars() {
+  const { status } = useCatalog()
+  useEffect(() => {
+    if (status === 'ready') resolveNow()
+  }, [status])
+}
+
+/** Open a sky from a `#sky=` link: show it without touching the viewer's own, and go where it was shared from. */
+export function useSharedLink() {
+  useEffect(() => {
+    const open = () => {
+      const str = readHash(location.hash)
+      if (!str) return
+      history.replaceState(null, '', location.pathname + location.search)
+      const shared = decodeSky(str)
+      if (!shared) {
+        sky.toast('That link could not be read, so here is your own sky')
+        return
+      }
+      sky.loadShared(shared.constellations, { instrument: shared.instrument, scale: shared.scale })
+      if (shared.camera) {
+        exitOrbit()
+        cancelTravel()
+        Object.assign(cam, shared.camera)
+      }
+      sky.select(shared.target)
+      resolveNow()
+    }
+    open()
+    window.addEventListener('hashchange', open)
+    return () => window.removeEventListener('hashchange', open)
   }, [])
 }
