@@ -24,6 +24,7 @@ export function Tool({ icon: Icon, label, onClick, active, disabled, primary, ke
       disabled={disabled}
       aria-pressed={active}
       title={title ?? label}
+      aria-label={label}
     >
       <Icon size={16} strokeWidth={1.7} aria-hidden />
       <span className="tool__label">{label}</span>

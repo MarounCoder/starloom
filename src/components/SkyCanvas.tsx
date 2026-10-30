@@ -129,7 +129,9 @@ export function SkyCanvas() {
         const a = track[0]
         const b = track[track.length - 1]
         const dt = Math.max(16, b.t - a.t)
-        view.vel = { x: -(b.x - a.x) / dt / view.cam.zoom, y: -(b.y - a.y) / dt / view.cam.zoom }
+        // Cap the fling at 2.5 screen px per ms so a fast flick glides instead of teleporting.
+        const k = Math.min(1, 2.5 / (Math.hypot(b.x - a.x, b.y - a.y) / dt || 1))
+        view.vel = { x: (-(b.x - a.x) / dt / view.cam.zoom) * k, y: (-(b.y - a.y) / dt / view.cam.zoom) * k }
       }
       dragging = false
       canvas.style.cursor = 'crosshair'

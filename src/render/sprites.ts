@@ -68,7 +68,7 @@ export const NEBULA_EXTENT = 1.8
 export function nebulaSprite(n: Nebula): Canvas {
   let c = nebulaCache.get(n.id)
   if (c) return c
-  const size = 384
+  const size = 512
   const [cv, ctx] = canvas(size)
   const k = size / 2 / (n.r * NEBULA_EXTENT)
   ctx.globalCompositeOperation = 'lighter'
@@ -76,15 +76,6 @@ export function nebulaSprite(n: Nebula): Canvas {
     ctx.globalAlpha = b.a
     const r = b.r * k
     ctx.drawImage(glowSprite(b.color), size / 2 + b.dx * k - r, size / 2 + b.dy * k - r, r * 2, r * 2)
-  }
-  // A few young stars embedded in the gas.
-  const rand = mulberry32(hash2(n.x | 0, n.y | 0, 3))
-  ctx.globalAlpha = 1
-  for (let i = 0; i < 14; i++) {
-    const x = size / 2 + (rand() - 0.5) * size * 0.5
-    const y = size / 2 + (rand() - 0.5) * size * 0.4
-    ctx.fillStyle = 'rgba(255,255,255,0.8)'
-    ctx.fillRect(x, y, 1.2, 1.2)
   }
   if (nebulaCache.size > 120) nebulaCache.clear()
   nebulaCache.set(n.id, cv)

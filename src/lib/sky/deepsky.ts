@@ -65,16 +65,22 @@ function nebula(rand: () => number, id: string, x: number, y: number, kind: Nebu
     blobs.push({ dx: 0, dy: 0, r: ring * 0.9, color: colors[1], a: 0.12 })
     blobs.push({ dx: 0, dy: 0, r: ring * 1.8, color: colors[2], a: 0.06 })
   } else {
-    const n = 22 + Math.floor(rand() * 18)
+    const n = 34 + Math.floor(rand() * 22)
+    // Blobs cluster along a few curved filaments rather than a single round cloud.
+    const strands = 2 + Math.floor(rand() * 3)
     for (let i = 0; i < n; i++) {
+      const s = i % strands
+      const t = gauss(rand) * 1.2
+      const bend = (s - strands / 2) * 0.6 + rand() * 0.3
       blobs.push({
-        dx: gauss(rand) * r * 0.7,
-        dy: gauss(rand) * r * 0.5,
-        r: r * (0.2 + rand() * 0.5),
+        dx: t * r * 0.6 + Math.sin(t * 2 + s) * r * 0.15,
+        dy: (bend + t * t * 0.25) * r * 0.35 + gauss(rand) * r * 0.12,
+        r: r * (0.12 + rand() * 0.4),
         color: colors[Math.floor(rand() * colors.length)],
-        a: 0.05 + rand() * 0.1,
+        a: 0.08 + rand() * 0.16,
       })
     }
+    blobs.push({ dx: 0, dy: 0, r: r * 0.35, color: '255,235,220', a: 0.22 })
   }
   return { type: 'nebula', id, name: name ?? catalogue(rand, 'SL'), kind, x, y, r, blobs }
 }

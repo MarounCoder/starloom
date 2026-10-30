@@ -46,7 +46,7 @@ interface Place {
 const PLACES: Place[] = [
   { label: 'Home', hint: 'Where you started', go: () => HOME },
   { label: 'The Solar System', hint: 'Planets at their real positions today', go: () => ({ ...SOLAR_ORIGIN, zoom: 0.5 }) },
-  { label: 'The Loom Nebula', hint: 'A glowing cloud of gas', go: () => cameraFor(DEEP_LAYER.nebula, 720, -260, 1.6) },
+  { label: 'The Loom Nebula', hint: 'A glowing cloud of gas', go: () => cameraFor(DEEP_LAYER.nebula, 720, -260, 1) },
   { label: 'The Seven Lanterns', hint: 'A young star cluster', go: () => ({ x: -1050, y: 420, zoom: 2.4 }) },
   { label: 'The Pinwheel Drift', hint: 'A spiral galaxy, very far away', go: () => cameraFor(DEEP_LAYER.galaxy, -620, 300, 9) },
   { label: 'Nearest nebula', hint: 'Find one close to here', go: nearestNebula },

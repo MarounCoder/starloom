@@ -296,7 +296,11 @@ button { font: inherit; color: inherit; }
   .card { top: auto; bottom: calc(var(--bottom) + 128px); right: 50%; transform: translateX(50%); animation: none; }
   .notices { top: calc(var(--top) + 96px); }
 }
-@media (max-width: 420px) {
+@media (max-width: 440px) {
+  .tool .tool__label { display: none; }
+  .tool--primary { padding-inline: 12px; }
+  .tool { padding: 9px; }
+  .tools { gap: 2px; }
   .nav__buttons { display: grid; grid-template-columns: repeat(2, 40px); }
   .brand { max-width: calc(100vw - 130px); }
 }

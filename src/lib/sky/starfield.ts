@@ -94,7 +94,7 @@ export function generateChunk(layer: Layer, cx: number, cy: number): Chunk {
           y,
           r: 160 + rand() * 300,
           kind: k < 0.6 ? 'haze' : k < 0.8 ? 'core' : 'violet',
-          a: 0.05 + d * 0.11,
+          a: 0.04 + d * 0.085,
         })
       }
       if (centre > 0.35) {

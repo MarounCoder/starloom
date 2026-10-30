@@ -182,7 +182,7 @@ function drawDeep(o: Scene, type: DeepSkyObject['type'], p: number) {
         ctx.globalCompositeOperation = 'lighter'
         ctx.globalAlpha = 0.95 * (0.35 + 0.65 * tint.stars)
         ctx.drawImage(nebulaSprite(obj), sx - E, sy - E, E * 2, E * 2)
-        labelY = sy + R * 0.9 + 16 * ui
+        labelY = sy + R * 0.55 + 16 * ui
       } else {
         ctx.globalCompositeOperation = 'lighter'
         ctx.globalAlpha = 0.25 * tint.stars

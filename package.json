@@ -37,5 +37,21 @@
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
+  },
+  "homepage": "https://marouncoder.github.io/starloom/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MarounCoder/starloom.git"
+  },
+  "keywords": [
+    "night-sky",
+    "constellations",
+    "web-audio",
+    "canvas",
+    "react",
+    "generative"
+  ],
+  "engines": {
+    "node": ">=20.19"
   }
 }
