@@ -108,8 +108,19 @@ const LANDMARKS: Record<string, (rand: () => number) => DeepSkyObject> = {
   'cluster:-1:0': rand => cluster(rand, 'home-cluster', -1050, 420, 'The Seven Lanterns'),
 }
 
+const memo = new Map<string, DeepSkyObject | null>()
+
 /** The deep-sky object (if any) in a region, deterministic for a given region and type. */
 export function getRegionObject(type: DeepSkyObject['type'], rx: number, ry: number): DeepSkyObject | null {
+  const key = `${type}:${rx}:${ry}`
+  if (memo.has(key)) return memo.get(key)!
+  if (memo.size > 4000) memo.clear()
+  const obj = makeRegionObject(type, rx, ry)
+  memo.set(key, obj)
+  return obj
+}
+
+function makeRegionObject(type: DeepSkyObject['type'], rx: number, ry: number): DeepSkyObject | null {
   const seed = { galaxy: 71, nebula: 73, cluster: 79 }[type]
   const rand = mulberry32(hash2(rx, ry, seed))
   const landmark = LANDMARKS[`${type}:${rx}:${ry}`]
